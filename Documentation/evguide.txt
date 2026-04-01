@@ -1,0 +1,149 @@
+﻿You want to change the product structure completely to this:
+
+Page 1 — News / content-first page
+
+This page should focus on:
+
+latest EV technology upgrades
+battery, charging, motor, software updates
+best-selling EVs
+why people love them
+buyer feedback
+user stories / ownership experience
+
+So this page is for:
+traffic + trust + storytelling
+
+Page 2 — EV comparison page
+
+This page should be only for:
+
+selecting EVs
+full specifications
+features
+description
+side-by-side comparison
+
+So this page is for:
+research + decision-making
+
+Page 3 — Finance page
+
+This page should be only for:
+
+bank offers
+interest rates
+facilities
+EMI
+consultation form inside this finance flow
+
+So this page is for:
+conversion + lead capture
+
+And yes — for now we should remove the 3D viewer
+
+That makes sense because:
+
+it is not the most important feature now
+content and comparison are more important first
+you want a cleaner startup structure
+it is better to simplify the MVP
+
+So the new structure becomes:
+
+Home / News page
+    ↓
+Comparison page
+    ↓
+Finance page
+    ↓
+Consultation form
+This is actually a better product structure
+
+Because now each page has one clear job:
+
+1. News page
+
+Brings traffic from SEO and social media
+
+2. Comparison page
+
+Helps users evaluate cars properly
+
+3. Finance page
+
+Turns interest into leads
+
+That is a strong funnel.
+
+What we should do next
+New route structure
+
+Instead of one long single page, make it like this:
+
+/app/page.tsx               → News / homepage
+/app/compare/page.tsx       → Comparison page
+/app/finance/page.tsx       → Finance page
+Important note about “latest EV tech upgrade” and “most sold EV”
+
+Those should not stay hardcoded forever.
+
+For now we can:
+
+design the page structure with mock data
+
+Later we should:
+
+connect real news/API/database
+update best-selling EV content dynamically
+
+Because “latest” and “most sold” change over time.
+
+Recommended final website structure
+Page 1 — Home / News
+
+Sections:
+
+hero
+latest EV tech news
+best-selling EVs
+why people love them
+customer stories / testimonials
+CTA to comparison page
+Page 2 — Compare
+
+Sections:
+
+select 2 EVs
+comparison table
+full specs
+features
+descriptions
+CTA to finance page
+Page 3 — Finance
+
+Sections:
+
+selected EV summary
+EMI section
+bank offers
+terms popup
+consultation form
+My answer
+
+Yes, I fully got your point.
+
+You want:
+
+remove 3D now
+make page 1 content/news driven
+page 2 comparison
+page 3 finance + consultation
+
+That is a cleaner and smarter MVP.
+
+Reply with:
+
+restructure into 3 pages now
+
+and I’ll rewrite the app structure properly for those three pages.
