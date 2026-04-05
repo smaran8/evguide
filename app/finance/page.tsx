@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import LoginModal from "@/components/LoginModal";
@@ -33,6 +33,7 @@ function FinanceContent() {
 
   const [quoteDownPayment, setQuoteDownPayment] = useState(0);
   const [quoteTenure, setQuoteTenure] = useState(5);
+  const formRef = useRef<HTMLElement>(null);
 
   // EMI calculator modal
   const [showEmi, setShowEmi] = useState(false);
@@ -323,6 +324,9 @@ function FinanceContent() {
                     setSelectedBank(offer);
                     setSuccess("");
                     setError("");
+                    setTimeout(() => {
+                      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 50);
                   }}
                   className={`mt-5 w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                     selectedBank?.id === offer.id
@@ -337,7 +341,7 @@ function FinanceContent() {
           </div>
 
           {selectedBank ? (
-            <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section ref={formRef} className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-blue-600">Bank Consultant Form</p>
