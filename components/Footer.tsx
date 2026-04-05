@@ -1,6 +1,41 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function Footer() {
+  const supabase = useMemo(() => createClient(), []);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadAuth() {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (mounted) {
+          setIsLoggedIn(Boolean(data.user));
+        }
+      } catch {
+        if (mounted) {
+          setIsLoggedIn(false);
+        }
+      }
+    }
+
+    loadAuth();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(Boolean(session?.user));
+    });
+
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-7xl px-6 py-10">
@@ -14,8 +49,8 @@ export default function Footer() {
           <Link href="/compare">Compare</Link>
           <Link href="/finance">Finance</Link>
           <Link href="/appointment">Reviews</Link>
-          <Link href="/login">Sign In</Link>
-          <Link href="/signup">Sign Up</Link>
+          {!isLoggedIn ? <Link href="/login">Sign In</Link> : null}
+          {!isLoggedIn ? <Link href="/signup">Sign Up</Link> : null}
         </div>
 
         <p className="mt-6 text-xs text-slate-400">

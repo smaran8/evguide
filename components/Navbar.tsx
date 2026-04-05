@@ -16,6 +16,7 @@ export default function Navbar() {
   const supabase = useMemo(() => createClient(), []);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -36,6 +37,8 @@ export default function Navbar() {
         if (mounted) setIsLoggedIn(Boolean(data.user));
       } catch {
         if (mounted) setIsLoggedIn(false);
+      } finally {
+        if (mounted) setAuthLoading(false);
       }
     }
 
@@ -43,6 +46,7 @@ export default function Navbar() {
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(Boolean(session?.user));
+      setAuthLoading(false);
     });
 
     return () => {
@@ -136,7 +140,7 @@ export default function Navbar() {
               Check EMI
             </Link>
 
-            {isLoggedIn ? (
+            {!authLoading && isLoggedIn ? (
               <div className="relative" ref={profileRef}>
                 <button
                   type="button"
@@ -173,19 +177,19 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : !authLoading ? (
               <Link
                 href="/login"
                 className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-px hover:border-slate-300 hover:shadow-md active:translate-y-0"
               >
                 Sign In
               </Link>
-            )}
+            ) : null}
           </div>
 
           {/* Mobile: Sign up/out + hamburger */}
           <div className="flex items-center gap-2 md:hidden">
-            {!isLoggedIn ? (
+            {!authLoading && !isLoggedIn ? (
               <Link
                 href="/signup"
                 onClick={() => setMenuOpen(false)}
@@ -193,7 +197,7 @@ export default function Navbar() {
               >
                 Sign Up
               </Link>
-            ) : (
+            ) : !authLoading ? (
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -201,7 +205,7 @@ export default function Navbar() {
               >
                 Sign Out
               </button>
-            )}
+            ) : null}
 
             <button
               type="button"
