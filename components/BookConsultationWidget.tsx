@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import LoginModal from "@/components/LoginModal";
 import { evModels } from "@/data/evModels";
@@ -26,6 +27,7 @@ const EMPTY_FORM: FormData = {
 };
 
 export default function BookConsultationWidget() {
+  const pathname = usePathname();
   const supabase = useMemo(() => createClient(), []);
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -135,6 +137,11 @@ export default function BookConsultationWidget() {
 
   const inputCls =
     "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition";
+
+  // Keep appointment widget user-facing only.
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <>
