@@ -1,65 +1,68 @@
 import Link from "next/link";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 async function getStats() {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
 
-  const { count: totalEVs } = await supabase
-    .from("ev_models")
-    .select("*", { count: "exact", head: true });
-
-  const { data: brandRows } = await supabase
-    .from("ev_models")
-    .select("brand");
-
-  const uniqueBrands = new Set(brandRows?.map((r) => r.brand) ?? []).size;
-
-  const { data: recentEVs } = await supabase
-    .from("ev_models")
-    .select("id, brand, model, price, range_km")
-    .order("created_at", { ascending: false })
-    .limit(5);
-
-  const { count: totalBlogPosts } = await supabase
-    .from("blog_posts")
-    .select("*", { count: "exact", head: true });
-
-  const { count: publishedBlogPosts } = await supabase
-    .from("blog_posts")
-    .select("*", { count: "exact", head: true })
-    .eq("published", true);
-
-  const { count: totalFeedback } = await supabase
-    .from("user_ev_feedback")
-    .select("*", { count: "exact", head: true });
-
-  const { count: approvedFeedback } = await supabase
-    .from("user_ev_feedback")
-    .select("*", { count: "exact", head: true })
-    .eq("is_approved", true);
-
-  const { count: totalConsultations } = await supabase
-    .from("consultation_requests")
-    .select("*", { count: "exact", head: true });
-
-  const { count: pendingConsultations } = await supabase
-    .from("consultation_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "pending");
-
-  const { count: contactedConsultations } = await supabase
-    .from("consultation_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "contacted");
-
-  const { count: resolvedConsultations } = await supabase
-    .from("consultation_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "resolved");
+  const [
+    { count: totalEVs },
+    { data: brandRows },
+    { data: recentEVs },
+    { count: totalBlogPosts },
+    { count: publishedBlogPosts },
+    { count: totalFeedback },
+    { count: approvedFeedback },
+    { count: totalConsultations },
+    { count: pendingConsultations },
+    { count: contactedConsultations },
+    { count: resolvedConsultations },
+    { count: totalVehicleQueries },
+    { count: newVehicleQueries },
+    { count: totalSeoPages },
+    { count: activeSeoPages },
+    { count: totalGeoRegions },
+    { count: activeGeoRegions },
+  ] = await Promise.all([
+    supabase.from("ev_models").select("*", { count: "exact", head: true }),
+    supabase.from("ev_models").select("brand"),
+    supabase
+      .from("ev_models")
+      .select("id, brand, model, price, range_km")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("blog_posts").select("*", { count: "exact", head: true }),
+    supabase.from("blog_posts").select("*", { count: "exact", head: true }).eq("published", true),
+    supabase.from("user_ev_feedback").select("*", { count: "exact", head: true }),
+    supabase
+      .from("user_ev_feedback")
+      .select("*", { count: "exact", head: true })
+      .eq("is_approved", true),
+    supabase.from("consultation_requests").select("*", { count: "exact", head: true }),
+    supabase
+      .from("consultation_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending"),
+    supabase
+      .from("consultation_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "contacted"),
+    supabase
+      .from("consultation_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "resolved"),
+    supabase.from("vehicle_queries").select("*", { count: "exact", head: true }),
+    supabase.from("vehicle_queries").select("*", { count: "exact", head: true }).eq("status", "new"),
+    adminClient.from("seo_pages").select("*", { count: "exact", head: true }),
+    adminClient.from("seo_pages").select("*", { count: "exact", head: true }).eq("is_active", true),
+    adminClient.from("geo_regions").select("*", { count: "exact", head: true }),
+    adminClient.from("geo_regions").select("*", { count: "exact", head: true }).eq("is_active", true),
+  ]);
 
   return {
     totalEVs: totalEVs ?? 0,
-    uniqueBrands,
+    uniqueBrands: new Set(brandRows?.map((row) => row.brand) ?? []).size,
     recentEVs: recentEVs ?? [],
     totalBlogPosts: totalBlogPosts ?? 0,
     publishedBlogPosts: publishedBlogPosts ?? 0,
@@ -69,6 +72,12 @@ async function getStats() {
     pendingConsultations: pendingConsultations ?? 0,
     contactedConsultations: contactedConsultations ?? 0,
     resolvedConsultations: resolvedConsultations ?? 0,
+    totalVehicleQueries: totalVehicleQueries ?? 0,
+    newVehicleQueries: newVehicleQueries ?? 0,
+    totalSeoPages: totalSeoPages ?? 0,
+    activeSeoPages: activeSeoPages ?? 0,
+    totalGeoRegions: totalGeoRegions ?? 0,
+    activeGeoRegions: activeGeoRegions ?? 0,
   };
 }
 
@@ -85,6 +94,12 @@ export default async function AdminDashboardPage() {
     pendingConsultations,
     contactedConsultations,
     resolvedConsultations,
+    totalVehicleQueries,
+    newVehicleQueries,
+    totalSeoPages,
+    activeSeoPages,
+    totalGeoRegions,
+    activeGeoRegions,
   } = await getStats();
 
   const draftBlogPosts = Math.max(totalBlogPosts - publishedBlogPosts, 0);
@@ -128,6 +143,33 @@ export default async function AdminDashboardPage() {
       actionLabel: "Manage Consultations",
       tone: "border-amber-200 bg-amber-50 text-amber-900",
     },
+    {
+      title: "Vehicle Queries",
+      total: totalVehicleQueries,
+      detailA: `${newVehicleQueries} new enquiries`,
+      detailB: `${totalVehicleQueries - newVehicleQueries} actioned`,
+      href: "/admin/vehicle-queries",
+      actionLabel: "View Queries",
+      tone: "border-violet-200 bg-violet-50 text-violet-900",
+    },
+    {
+      title: "SEO Pages",
+      total: totalSeoPages,
+      detailA: `${activeSeoPages} active`,
+      detailB: `${totalSeoPages - activeSeoPages} inactive`,
+      href: "/admin/seo",
+      actionLabel: "Manage SEO",
+      tone: "border-rose-200 bg-rose-50 text-rose-900",
+    },
+    {
+      title: "GEO Regions",
+      total: totalGeoRegions,
+      detailA: `${activeGeoRegions} active`,
+      detailB: `${totalGeoRegions - activeGeoRegions} inactive`,
+      href: "/admin/geo",
+      actionLabel: "Manage GEO",
+      tone: "border-teal-200 bg-teal-50 text-teal-900",
+    },
   ];
 
   const taskReport = [
@@ -155,6 +197,12 @@ export default async function AdminDashboardPage() {
       pending: activeConsultations,
       note: "Resolved vs pending/contacted",
     },
+    {
+      task: "Vehicle Query Leads",
+      done: totalVehicleQueries - newVehicleQueries,
+      pending: newVehicleQueries,
+      note: "Actioned vs new from Find My EV",
+    },
   ];
 
   return (
@@ -162,7 +210,7 @@ export default async function AdminDashboardPage() {
       <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
       <p className="mt-1 text-slate-500">Overview of your EV Guide database.</p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {moduleCards.map((card) => (
           <div key={card.title} className={`rounded-2xl border p-6 shadow-sm ${card.tone}`}>
             <p className="text-sm font-semibold">{card.title}</p>
@@ -182,7 +230,9 @@ export default async function AdminDashboardPage() {
       <div className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-6 py-4">
           <h2 className="text-xl font-bold text-slate-900">Task Completion Report</h2>
-          <p className="mt-1 text-sm text-slate-500">Done vs pending status for each admin task area.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Done vs pending status for each admin task area.
+          </p>
         </div>
 
         <table className="w-full text-sm">
@@ -230,7 +280,6 @@ export default async function AdminDashboardPage() {
         </Link>
       </div>
 
-      {/* Recent EVs table */}
       <div className="mt-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-slate-900">Recently Added</h2>
@@ -266,13 +315,10 @@ export default async function AdminDashboardPage() {
                   <tr key={ev.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
                     <td className="px-6 py-4 font-medium text-slate-900">{ev.brand}</td>
                     <td className="px-6 py-4 text-slate-700">{ev.model}</td>
-                    <td className="px-6 py-4 text-slate-700">£{ev.price?.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-slate-700">GBP {ev.price?.toLocaleString()}</td>
                     <td className="px-6 py-4 text-slate-700">{ev.range_km} km</td>
                     <td className="px-6 py-4 text-right">
-                      <Link
-                        href={`/admin/evs/${ev.id}`}
-                        className="text-blue-600 hover:underline"
-                      >
+                      <Link href={`/admin/evs/${ev.id}`} className="text-blue-600 hover:underline">
                         Edit
                       </Link>
                     </td>

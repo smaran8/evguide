@@ -9,6 +9,8 @@ import { mapDbEV, type DbEV } from "@/lib/ev-models";
 import { getApprovedFeedbackStoriesForModel } from "@/lib/feedback";
 import { createClient } from "@/lib/supabase/server";
 import { evModels } from "@/data/evModels";
+import TrackOnMount from "@/components/tracking/TrackOnMount";
+import IntentAwareCarActions from "@/components/personalization/IntentAwareCarActions";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -61,6 +63,11 @@ export default async function CarDetailsPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
+      <TrackOnMount
+        eventType="car_view"
+        carId={model.id}
+        eventValue={{ brand: model.brand, model: model.model }}
+      />
       <Navbar />
       
       {/* Hero Section */}
@@ -87,20 +94,12 @@ export default async function CarDetailsPage({ params }: Props) {
               
               <p className="mt-6 text-lg text-slate-600">{model.description}</p>
               
-              <div className="mt-8 flex gap-4">
-                <Link
-                  href={`/compare?carA=${model.id}`}
-                  className="flex-1 rounded-2xl bg-blue-600 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  Compare This EV
-                </Link>
-                <Link
-                  href={`/finance?car=${model.id}`}
-                  className="flex-1 rounded-2xl bg-emerald-600 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-emerald-700"
-                >
-                  Finance This EV
-                </Link>
-              </div>
+              <IntentAwareCarActions
+                carId={model.id}
+                carPrice={model.price}
+                brand={model.brand}
+                model={model.model}
+              />
 
               <a
                 href={`/api/vehicle-manual/${model.id}`}

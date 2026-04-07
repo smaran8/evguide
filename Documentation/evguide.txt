@@ -1,83 +1,505 @@
-﻿You want to change the product structure completely to this:
+﻿================================================================
+  EVGUIDE — FULL PROJECT DOCUMENTATION
+  Last updated: April 5, 2026
+================================================================
 
-Page 1 — News / content-first page
+This document covers everything about the EVGuide project —
+what it is, how it works, what was built, how to run it,
+and how to maintain it in the future.
 
-This page should focus on:
+================================================================
+SECTION 1 — WHAT IS EVGUIDE
+================================================================
 
-latest EV technology upgrades
-battery, charging, motor, software updates
-best-selling EVs
-why people love them
-buyer feedback
-user stories / ownership experience
+EVGuide is a Next.js web application for the Indian EV market.
+It helps users:
+  - Read the latest EV news and blog posts
+  - Compare electric vehicles side by side
+  - Calculate EMI and explore bank finance offers
+  - Submit consultation requests to speak to an expert
+  - Leave feedback and ownership stories about their EVs
+  - Use an AI assistant (Claude) for EV guidance
 
-So this page is for:
-traffic + trust + storytelling
+The product funnel is:
+  Home (news + trust)  →  Compare  →  Finance  →  Consultation
 
-Page 2 — EV comparison page
+Each page has one clear job:
+  Home page    — SEO traffic, trust, storytelling
+  Compare page — research and decision-making
+  Finance page — conversion and lead capture
+  Consultation — actual lead (human call/email)
 
-This page should be only for:
+================================================================
+SECTION 2 — TECH STACK
+================================================================
 
-selecting EVs
-full specifications
-features
-description
-side-by-side comparison
+  Framework     : Next.js 16 (App Router, React 19)
+  Language      : TypeScript
+  Styling       : Tailwind CSS v4
+  Database      : Supabase (PostgreSQL)
+  Auth          : Supabase Auth (email/password)
+  AI            : Anthropic Claude (claude-3-5-sonnet-latest)
+  Email         : Resend
+  Hosting       : Vercel
+  Font          : Geist (Google Fonts)
 
-So this page is for:
-research + decision-making
+================================================================
+SECTION 3 — ENVIRONMENT VARIABLES
+================================================================
 
-Page 3 — Finance page
+Create a file called .env.local in the root of the project.
+This file is gitignored and must never be committed.
 
-This page should be only for:
+Required variables:
 
-bank offers
-interest rates
-facilities
-EMI
-consultation form inside this finance flow
+  NEXT_PUBLIC_SUPABASE_URL=
+    Your Supabase project URL.
+    Found in: Supabase Dashboard → Settings → API
 
-So this page is for:
-conversion + lead capture
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=
+    Your Supabase anon/public key.
+    Found in: Supabase Dashboard → Settings → API
 
-And yes — for now we should remove the 3D viewer
+  SUPABASE_SERVICE_ROLE_KEY=
+    Your Supabase service role key (secret, server-side only).
+    Found in: Supabase Dashboard → Settings → API
+    Used for: admin operations that bypass Row Level Security.
 
-That makes sense because:
+  ANTHROPIC_API_KEY=
+    Your Claude API key.
+    Found in: https://console.anthropic.com
 
-it is not the most important feature now
-content and comparison are more important first
-you want a cleaner startup structure
-it is better to simplify the MVP
+  RESEND_API_KEY=
+    Your Resend API key for sending emails.
+    Found in: https://resend.com/api-keys
 
-So the new structure becomes:
+On Vercel, add these same variables in:
+  Project → Settings → Environment Variables
 
-Home / News page
-    ↓
-Comparison page
-    ↓
-Finance page
-    ↓
-Consultation form
-This is actually a better product structure
+================================================================
+SECTION 4 — FOLDER STRUCTURE
+================================================================
 
-Because now each page has one clear job:
+  app/                   All Next.js pages (App Router)
+  ├── page.tsx           Home page
+  ├── layout.tsx         Root layout (fonts, global widget)
+  ├── globals.css        Global Tailwind styles
+  ├── blog/              Blog listing and individual post pages
+  ├── cars/[id]/         Individual EV detail + reviews page
+  ├── compare/           EV comparison page
+  ├── finance/           Finance offers + EMI + consultation
+  ├── assistant/         Consultation request form page
+  ├── appointment/       Appointment booking page
+  ├── login/             User login page
+  ├── signup/            User signup page
+  ├── reviews-lab/       Component test page (dev only)
+  ├── admin-login/       Admin-only login page
+  ├── admin/             Full admin panel (protected)
+  │   ├── page.tsx       Dashboard with stats
+  │   ├── evs/           Manage EV models (list, add, edit)
+  │   ├── blog/          Manage blog posts (list, add, edit)
+  │   ├── consultations/ View and forward consultation requests
+  │   ├── feedback/      Moderate user feedback/stories
+  │   └── users/         View users and toggle admin role
+  └── api/               All API routes (server-side)
+      ├── claude/        AI assistant endpoint (admin only)
+      ├── consultations/ Submit consultation requests
+      ├── evs/           Get EV list and individual EV
+      ├── bank-offers/   Get bank finance offers
+      ├── uploads/       Image upload endpoint
+      ├── vehicle-manual/[id]/ Vehicle manual lookup
+      ├── health/        Health check endpoint
+      └── admin/         Protected admin API routes
+          ├── blog/      CRUD for blog posts
+          ├── users/     List users, toggle admin role
+          ├── consultations/ List + forward consultations
+          └── feedback/  Moderate feedback (approve/reject)
 
-1. News page
+  components/            All React UI components
+  data/                  Static fallback data files
+  ├── evModels.ts        Fallback EV model data
+  ├── bankOffers.ts      Fallback bank offer data
+  ├── evNews.ts          Fallback news data
+  └── evReviews.ts       Static review data
 
-Brings traffic from SEO and social media
+  lib/                   Shared utility/data-fetching functions
+  ├── evs.ts             Fetch EVs from Supabase
+  ├── blog.ts            Fetch blog posts from Supabase
+  ├── news.ts            Fetch EV news
+  ├── reviews.ts         Fetch approved reviews
+  ├── feedback.ts        Fetch approved feedback stories
+  ├── supabase/
+  │   ├── client.ts      Client-side Supabase instance
+  │   ├── server.ts      Server-side Supabase instance (cookies)
+  │   └── admin.ts       Admin Supabase instance (service role)
+  └── auth/
+      └── admin-login.ts Admin login logic with role check
 
-2. Comparison page
+  types/index.ts         All shared TypeScript types
+  public/uploads/        Uploaded images stored here
+  Documentation/         This file + SQL setup scripts
 
-Helps users evaluate cars properly
+================================================================
+SECTION 5 — PAGES EXPLAINED
+================================================================
 
-3. Finance page
+--- HOME PAGE (/page.tsx) ---
+Server component. Fetches 5 things in parallel:
+  1. Featured blog posts (3 latest)
+  2. EV news items
+  3. Latest approved owner reviews (8)
+  4. Top selling EV models
+  5. Approved feedback/ownership stories
+Renders: FeaturedBlogPostsSection, NewsSection,
+         VerifiedOwnerReviewsSection, BestSellingSection,
+         StoriesSection
 
-Turns interest into leads
+--- COMPARE PAGE (/compare) ---
+Client component. Fetches EV models from Supabase on load,
+falls back to static data/evModels.ts if fetch fails.
+Features:
+  - Select up to 3 EVs to compare side by side
+  - Full spec comparison table
+  - All models overview grid
+  - Consultation form at the bottom
+Uses useSearchParams so it is wrapped in <Suspense>.
 
-That is a strong funnel.
+--- FINANCE PAGE (/finance) ---
+Client component. Shows bank offers with interest rates,
+max tenure, LTV%, processing fees.
+Features:
+  - Select EV model and bank offer
+  - EMI calculator (monthly repayment, total interest)
+  - Loan quote preview
+  - Consultation form to book a finance call
+Also uses useSearchParams — wrapped in <Suspense>.
+  (This was the build fix applied before Vercel deployment.)
 
-What we should do next
-New route structure
+--- BLOG PAGE (/blog) ---
+Server component. Lists all published blog posts from Supabase.
+Supports category filter: EVs, Charging, Updated Features.
+
+--- BLOG POST PAGE (/blog/[slug]) ---
+Server component. Fetches a single post by slug.
+Renders full post content.
+
+--- CAR DETAIL PAGE (/cars/[id]) ---
+Server component. Shows full specs for one EV.
+Also shows: verified owner reviews + approved feedback stories.
+Fetches from Supabase, falls back to static data.
+
+--- ASSISTANT / CONSULTATION PAGE (/assistant) ---
+Server component. Renders ConsultationForm.
+Users can submit a consultation request for bank finance
+or a specific vehicle. Requires login.
+
+--- APPOINTMENT PAGE (/appointment) ---
+Standalone appointment booking page.
+
+--- LOGIN PAGE (/login) ---
+User login using Supabase Auth (email/password).
+
+--- SIGNUP PAGE (/signup) ---
+User registration. Creates a Supabase auth user.
+A database trigger auto-creates a profile row in profiles table.
+
+--- ADMIN LOGIN PAGE (/admin-login) ---
+Separate login page for admins only.
+Uses loginAdminWithPassword() which:
+  1. Signs in with Supabase auth
+  2. Checks profiles table for role = 'admin'
+  3. Rejects non-admin users even if password is correct
+
+--- ADMIN PANEL (/admin) ---
+Protected by AdminLayout which checks:
+  - Is the user logged in?
+  - Does their profiles row have role = 'admin'?
+  If either fails → redirect to /admin-login or /
+
+Sub-pages:
+  /admin            Dashboard with EV count, brand count, recent EVs
+  /admin/evs        List all EVs, delete, link to edit
+  /admin/evs/new    Add a new EV model with image upload
+  /admin/evs/[id]   Edit an existing EV model
+  /admin/blog       List all blog posts
+  /admin/blog/new   Write a new blog post (uses Claude AI to generate)
+  /admin/blog/[id]  Edit a blog post
+  /admin/consultations  View all consultation requests, mark status,
+                        forward to email via Resend
+  /admin/feedback   Moderate user feedback: approve or reject
+  /admin/users      View all users, toggle someone to admin role
+
+================================================================
+SECTION 6 — SUPABASE DATABASE TABLES
+================================================================
+
+Run the SQL in Documentation/supabase-admin-auth.sql to set up
+the profiles table and auth triggers.
+
+Tables used in this project:
+
+  profiles
+    - id (uuid, references auth.users)
+    - full_name (text)
+    - role (text: 'user' | 'admin', default 'user')
+    - created_at, updated_at
+    Auth trigger auto-creates a row on new user signup.
+    Use promote_user_to_admin('email@example.com') SQL function
+    to make someone an admin.
+
+  ev_models
+    - id, brand, model, hero_image, price
+    - motor_capacity_kw, torque_nm, ground_clearance_mm
+    - tyre_size, battery_kwh, range_km, drive
+    - charging_standard, fast_charge_time, adas, warranty
+    - seats, boot_litres, top_speed_kph, acceleration
+    - description, best_for, loved_reason
+    - created_at
+
+  blog_posts
+    - id, slug, title, excerpt, content
+    - category (EVs | Charging | Updated Features)
+    - cover_image, published (bool), published_at
+    - created_at
+
+  consultation_requests
+    - id, user_id (references auth.users)
+    - full_name, email, phone
+    - sector (bank | vehicle)
+    - bank_name, ev_model_id, ev_model_label
+    - preferred_time, notes
+    - status (pending | contacted | resolved)
+    - forwarded_at, created_at
+
+  ev_reviews  (user-submitted ownership reviews)
+    - id, user_id, ev_model_id
+    - rating (1-5), title, body
+    - approved (bool), created_at
+
+  feedback_stories  (user ownership stories)
+    - id, user_id, ev_model_id
+    - story_text, approved (bool)
+    - created_at
+
+Row Level Security (RLS) is enabled on all tables.
+Admins use the service role key (createAdminClient) to
+bypass RLS for management operations.
+
+================================================================
+SECTION 7 — API ROUTES
+================================================================
+
+  POST /api/consultations
+    Submit a consultation request.
+    Requires: user to be logged in.
+    Validates all fields server-side.
+    Sends confirmation email via Resend.
+
+  GET  /api/evs
+    Returns all EV models from Supabase.
+
+  GET  /api/evs/[id]
+    Returns one EV model by ID.
+
+  GET  /api/bank-offers
+    Returns bank finance offers.
+
+  POST /api/uploads
+    Upload an image (PNG/JPEG/WEBP, max 5MB).
+    Saves to public/uploads/ with UUID filename.
+    Returns the public URL path.
+
+  GET  /api/vehicle-manual/[id]
+    Returns manual/specification data for a vehicle.
+
+  GET  /api/health
+    Returns { status: "ok" } — used for uptime checks.
+
+  POST /api/claude
+    Admin-only AI endpoint.
+    Requires: logged in + role = 'admin'
+    Takes a prompt, calls Claude API, returns generated text.
+    Used in admin blog editor to generate post content.
+
+  GET  /api/admin/consultations
+    Admin: list all consultation requests.
+
+  POST /api/admin/consultations/forward
+    Admin: forward a consultation to team email via Resend.
+
+  GET  /api/admin/users
+    Admin: list all users with their profiles.
+
+  PATCH /api/admin/users/[id]
+    Admin: toggle a user's role between 'user' and 'admin'.
+
+  GET/POST /api/admin/blog
+    Admin: list all posts / create new post.
+
+  PATCH/DELETE /api/admin/blog/[id]
+    Admin: update or delete a blog post.
+
+  PATCH /api/admin/feedback/[userId]
+    Admin: approve or reject a feedback story.
+
+  POST /api/admin/feedback/bulk
+    Admin: bulk approve/reject feedback.
+
+================================================================
+SECTION 8 — KEY COMPONENTS
+================================================================
+
+  Navbar               Top navigation bar with auth state
+  Footer               Site footer with links
+  FooterNav            Secondary nav links in footer
+  BookConsultationWidget  Floating CTA widget on every page
+                          (rendered in root layout)
+  LoginModal           Modal for login prompt
+  HeroSection          Hero banner component
+  BestSellingSection   Grid of top EV models on home page
+  NewsSection          EV news cards section
+  CompactNewsSection   Smaller news section variant
+  FeaturedBlogPostsSection  3 featured blog post cards
+  StoriesSection       Owner story cards from approved feedback
+  VerifiedOwnerReviewsSection  Verified review cards on home page
+  TrustSection         Trust signals / social proof
+  FinalCTASection      Final call-to-action banner
+  QuickActionsSection  Quick navigation shortcuts
+  CompareHero          Header of the compare page
+  ComparisonTable      Side-by-side spec comparison table
+  AllModelsComparison  Full grid of all models
+  ComparisonPreviewSection  Preview section on compare page
+  ComparisonConsultationForm  Form at bottom of compare page
+  EMICalculatorPreview EMI calculation preview widget
+  FinanceOffers        Bank offer cards
+  BankPopup            Bank offer detail popup
+  OfferForm            Finance consultation offer form
+  ConsultationForm     Main consultation submission form
+  EVReviewCard         Single review card
+  EVReviewSummary      Overall rating summary for a model
+  EVReviewsSection     Section showing all reviews for a model
+  ApprovedFeedbackStories  Approved stories for a car page
+  UserEVFeedbackBox    Box for user to submit their own feedback
+  ClaudeAssistant      Admin AI assistant chat component
+  AdminSidebar         Left sidebar for admin panel navigation
+  AdminEVForm          Add/edit EV model form
+  AdminEVDeleteButton  Delete button for EVs (with confirmation)
+  AdminBlogForm        Add/edit blog post form (with AI generation)
+  AdminBlogDeleteButton  Delete button for blog posts
+  AdminConsultationStatusButton  Change consultation status
+  AdminConsultationForwardButton  Forward consultation to email
+  AdminFeedbackModerationTable   Table of pending feedback
+  AdminFeedbackModerationActions  Approve/reject buttons
+  AdminRoleToggle      Toggle user role between user/admin
+
+================================================================
+SECTION 9 — HOW TO RUN LOCALLY
+================================================================
+
+  1. Clone the repo:
+       git clone https://github.com/smaran8/evguide.git
+       cd evguide
+
+  2. Install dependencies:
+       npm install
+
+  3. Create .env.local with the 5 variables from Section 3.
+
+  4. Set up Supabase database:
+       - Go to Supabase SQL Editor
+       - Run the SQL in Documentation/supabase-admin-auth.sql
+       - Create all the tables listed in Section 6
+
+  5. Run the development server:
+       npm run dev
+
+  6. Open http://localhost:3000
+
+================================================================
+SECTION 10 — HOW TO DEPLOY TO VERCEL
+================================================================
+
+  1. Push code to GitHub:
+       git add -A
+       git commit -m "your message"
+       git push origin main
+
+  2. Go to https://vercel.com/new
+     Import the smaran8/evguide repository.
+
+  3. Add all 5 environment variables from Section 3
+     in Vercel → Project → Settings → Environment Variables.
+
+  4. Click Deploy.
+
+  After first deploy, every git push to main auto-redeploys.
+
+  Build command used by Vercel: next build
+  Output directory: .next (auto-detected)
+
+================================================================
+SECTION 11 — HOW TO MAKE SOMEONE AN ADMIN
+================================================================
+
+  After a user signs up on the site, run this in Supabase
+  SQL Editor:
+
+    select public.promote_user_to_admin('user@example.com');
+
+  This sets their role to 'admin' in the profiles table.
+  They can then log in at /admin-login and access /admin.
+
+================================================================
+SECTION 12 — IMPORTANT NOTES & GOTCHAS
+================================================================
+
+  1. useSearchParams() must always be inside <Suspense>
+     in Next.js App Router. The finance page and compare page
+     both use this — they are already wrapped correctly.
+     If you add a new page with useSearchParams, do the same.
+
+  2. Never use createAdminClient() on the client side.
+     It uses SUPABASE_SERVICE_ROLE_KEY which must stay secret.
+     Only use it inside app/api/ routes or server components.
+
+  3. Image uploads go to public/uploads/ locally.
+     On Vercel, the filesystem is read-only between deploys,
+     so uploaded images will not persist after a redeploy.
+     For production, migrate uploads to Supabase Storage or S3.
+
+  4. Static fallback data in data/evModels.ts and
+     data/bankOffers.ts is used when Supabase is unreachable
+     or tables are empty.
+
+  5. The Claude API endpoint (/api/claude) is admin-only.
+     It checks role = 'admin' before calling Anthropic.
+
+  6. Resend sends emails for consultation confirmations and
+     admin forwarding. Keep RESEND_API_KEY valid.
+
+  7. The /reviews-lab page is a developer test page.
+     It is not linked in the navbar and can be removed
+     before final production launch.
+
+================================================================
+SECTION 13 — GIT HISTORY SUMMARY
+================================================================
+
+  The project was built incrementally:
+  - Started with basic Next.js structure
+  - Added EV comparison and finance pages
+  - Added Supabase integration (replacing static data)
+  - Added user auth (login, signup)
+  - Added consultation system with email via Resend
+  - Added blog system (list, post, admin CRUD)
+  - Added admin panel with full management features
+  - Added Claude AI integration for blog generation
+  - Added user feedback + reviews system
+  - Added admin moderation for feedback
+  - Fixed Suspense boundary on finance page for Vercel build
+  - Deployed to Vercel (smaran8/evguide on GitHub)
+
+================================================================
 
 Instead of one long single page, make it like this:
 

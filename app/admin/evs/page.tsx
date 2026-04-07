@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import AdminEVDeleteButton from "@/components/AdminEVDeleteButton";
+import AdminSeedVehiclesButton from "@/components/AdminSeedVehiclesButton";
 
 async function getAllEVs() {
   const supabase = createAdminClient();
@@ -23,12 +24,15 @@ export default async function AdminEVsPage() {
           <h1 className="text-3xl font-bold text-slate-900">EV Models</h1>
           <p className="mt-1 text-slate-500">{evs.length} model{evs.length !== 1 ? "s" : ""} in the database</p>
         </div>
-        <Link
-          href="/admin/evs/new"
-          className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-        >
-          + Add New EV
-        </Link>
+        <div className="flex items-center gap-3">
+          <AdminSeedVehiclesButton />
+          <Link
+            href="/admin/evs/new"
+            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            + Add New EV
+          </Link>
+        </div>
       </div>
 
       <div className="mt-8">

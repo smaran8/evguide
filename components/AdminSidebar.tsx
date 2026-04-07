@@ -5,13 +5,18 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const navLinks = [
-  { href: "/admin", label: "Dashboard", exact: true },
-  { href: "/admin/evs", label: "EV Models" },
-  { href: "/admin/evs/new", label: "Add New EV" },
-  { href: "/admin/blog", label: "Blog Posts" },
-  { href: "/admin/feedback", label: "Feedback Moderation" },
-  { href: "/admin/consultations", label: "Consultations" },
-  { href: "/admin/users", label: "Users & Access" },
+  { href: "/admin",                  label: "Dashboard",            exact: true },
+  { href: "/admin/evs",              label: "EV Models" },
+  { href: "/admin/evs/new",          label: "Add New EV" },
+  { href: "/admin/blog",             label: "Blog Posts" },
+  { href: "/admin/feedback",         label: "Feedback Moderation" },
+  { href: "/admin/consultations",    label: "Consultations" },
+  { href: "/admin/vehicle-queries",  label: "Vehicle Queries" },
+  { href: "/admin/leads",            label: "Lead Intelligence" },
+  { href: "/admin/crm",              label: "CRM Journey" },
+  { href: "/admin/users",            label: "Users & Access" },
+  { href: "/admin/seo",              label: "SEO Management" },
+  { href: "/admin/geo",              label: "GEO Regions" },
 ];
 
 export default function AdminSidebar() {

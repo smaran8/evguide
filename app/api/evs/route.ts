@@ -51,6 +51,9 @@ export async function POST(request: Request) {
         description: body.description,
         best_for: body.best_for,
         loved_reason: body.loved_reason,
+        tier: body.tier ?? null,
+        body_type: body.body_type ?? null,
+        badge: body.badge ?? null,
       })
       .select()
       .single();

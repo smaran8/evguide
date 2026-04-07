@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { trackEvent } from "@/lib/tracking/client";
 import LoginModal from "@/components/LoginModal";
 
 const BANKS = [
@@ -34,6 +35,7 @@ export default function ConsultationForm({ evModels }: Props) {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const hasTrackedStart = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -168,7 +170,18 @@ export default function ConsultationForm({ evModels }: Props) {
               <button
                 key={key}
                 type="button"
-                onClick={() => { setSector(key); setBankName(""); setEvModelId(""); }}
+                onClick={() => {
+                  setSector(key);
+                  setBankName("");
+                  setEvModelId("");
+                  if (!hasTrackedStart.current) {
+                    hasTrackedStart.current = true;
+                    void trackEvent({
+                      eventType: "consultation_started",
+                      eventValue: { sector: key },
+                    });
+                  }
+                }}
                 className={`rounded-2xl border-2 p-4 text-left transition-all ${
                   sector === key
                     ? "border-blue-500 bg-blue-50"

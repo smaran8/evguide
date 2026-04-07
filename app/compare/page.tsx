@@ -10,6 +10,7 @@ import ComparisonConsultationForm from "@/components/ComparisonConsultationForm"
 import AllModelsComparison from "@/components/AllModelsComparison";
 import { evModels } from "@/data/evModels";
 import { mapDbEV, type DbEV } from "@/lib/ev-models";
+import { trackEvent } from "@/lib/tracking/client";
 import type { EVModel } from "@/types";
 
 export default function ComparePage() {
@@ -70,6 +71,10 @@ function ComparePageInner() {
 
   const handleCompare = (): void => {
     if (!isCompareDisabled) {
+      void trackEvent({
+        eventType: "compare_clicked",
+        eventValue: { carA: selectedA, carB: selectedB },
+      });
       setShowComparison(true);
     }
   };

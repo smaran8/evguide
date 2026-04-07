@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { trackEvent } from "@/lib/tracking/client";
 import { BankOffer, EVModel } from "@/types";
 
 function monthly(principal: number, annualRate: number, years: number) {
@@ -28,6 +30,7 @@ export default function FinanceOffers({
   selectedBank: BankOffer | null;
   onSelectBank: (offer: BankOffer) => void;
 }) {
+  const pathname = usePathname();
   const [downPayment, setDownPayment] = useState(5000);
   const [tenure, setTenure] = useState(5);
 
@@ -48,6 +51,23 @@ export default function FinanceOffers({
       })
       .sort((a, b) => a.monthly - b.monthly);
   }, [model, offers, loanAmount, tenure]);
+
+  function trackLoanOfferClicked(offer: RankedBankOffer): void {
+    void trackEvent({
+      eventType: "loan_offer_clicked",
+      pagePath: pathname || "/",
+      carId: model?.id ?? null,
+      eventValue: {
+        bank_id: offer.id,
+        bank_name: offer.bank,
+        interest_rate: offer.interestRate,
+        selected_vehicle_price: vehiclePrice,
+        down_payment: downPayment,
+        tenure_years: Math.min(tenure, offer.maxTenureYears || tenure),
+        estimated_monthly_emi: Math.round(offer.monthly),
+      },
+    });
+  }
 
   // Always resolve selected bank from latest ranked list
   const activeBank =
@@ -112,6 +132,7 @@ export default function FinanceOffers({
                     const bank = ranked.find((item) => item.id === e.target.value);
                     if (bank) {
                       onSelectBank(bank);
+                      trackLoanOfferClicked(bank);
                     }
                   }}
                   className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-500 focus:outline-none"
@@ -281,7 +302,10 @@ export default function FinanceOffers({
 
                       <button
                         type="button"
-                        onClick={() => onSelectBank(offer)}
+                        onClick={() => {
+                          onSelectBank(offer);
+                          trackLoanOfferClicked(offer);
+                        }}
                         className={`rounded-xl px-4 py-2 text-sm font-semibold ${
                           isSelected
                             ? "bg-blue-600 text-white"

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { trackEvent } from "@/lib/tracking/client";
 
 function calcEMI(principal: number, annualRate: number, months: number): number {
   if (principal <= 0 || months <= 0) return 0;
@@ -12,9 +14,11 @@ function calcEMI(principal: number, annualRate: number, months: number): number 
 }
 
 export default function EMICalculatorPreview() {
+  const pathname = usePathname();
   const [price, setPrice] = useState(35000);
   const [deposit, setDeposit] = useState(7000);
   const [months, setMonths] = useState(48);
+  const [trackedUsage, setTrackedUsage] = useState(false);
   const annualRate = 6.9;
 
   const safeDeposit = Math.min(deposit, price - 1000);
@@ -25,6 +29,26 @@ export default function EMICalculatorPreview() {
   );
   const totalPayable = monthly * months + safeDeposit;
   const totalInterest = Math.max(0, totalPayable - price);
+
+  function trackEmiUsedOnce(nextPrice: number, nextDeposit: number, nextMonths: number) {
+    if (trackedUsage) return;
+    setTrackedUsage(true);
+
+    const nextPrincipal = Math.max(0, nextPrice - Math.min(nextDeposit, nextPrice - 1000));
+    const nextEstimatedMonthlyEmi = calcEMI(nextPrincipal, annualRate, nextMonths);
+
+    void trackEvent({
+      eventType: "emi_used",
+      pagePath: pathname || "/",
+      eventValue: {
+        price: nextPrice,
+        deposit: nextDeposit,
+        months: nextMonths,
+        annual_rate: annualRate,
+        estimated_monthly_emi: nextEstimatedMonthlyEmi,
+      },
+    });
+  }
 
   return (
     <section className="border-b border-slate-200 bg-white">
@@ -55,7 +79,11 @@ export default function EMICalculatorPreview() {
                   max={80000}
                   step={500}
                   value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    setPrice(next);
+                    trackEmiUsedOnce(next, safeDeposit, months);
+                  }}
                   className="mt-2 w-full accent-blue-600"
                 />
                 <div className="flex justify-between text-xs text-slate-400">
@@ -76,7 +104,11 @@ export default function EMICalculatorPreview() {
                   max={Math.min(price - 1000, 30000)}
                   step={500}
                   value={safeDeposit}
-                  onChange={(e) => setDeposit(Number(e.target.value))}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    setDeposit(next);
+                    trackEmiUsedOnce(price, next, months);
+                  }}
                   className="mt-2 w-full accent-blue-600"
                 />
                 <div className="flex justify-between text-xs text-slate-400">
@@ -99,7 +131,11 @@ export default function EMICalculatorPreview() {
                   max={84}
                   step={12}
                   value={months}
-                  onChange={(e) => setMonths(Number(e.target.value))}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    setMonths(next);
+                    trackEmiUsedOnce(price, safeDeposit, next);
+                  }}
                   className="mt-2 w-full accent-blue-600"
                 />
                 <div className="flex justify-between text-xs text-slate-400">

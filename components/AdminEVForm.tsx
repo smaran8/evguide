@@ -7,6 +7,9 @@ const EMPTY_FORM = {
   brand: "",
   model: "",
   hero_image: "",
+  tier: "",
+  body_type: "",
+  badge: "",
   price: "",
   motor_capacity_kw: "",
   torque_nm: "",
@@ -132,6 +135,9 @@ export default function AdminEVForm({ mode = "create", id, initialData }: Props)
       brand: formData.brand,
       model: formData.model,
       hero_image: formData.hero_image,
+      tier: formData.tier || null,
+      body_type: formData.body_type || null,
+      badge: formData.badge || null,
       price: Number(formData.price),
       motor_capacity_kw: Number(formData.motor_capacity_kw),
       torque_nm: Number(formData.torque_nm),
@@ -220,6 +226,57 @@ export default function AdminEVForm({ mode = "create", id, initialData }: Props)
 
           <Field label="Price (£)" name="price" value={formData.price} onChange={handleChange} type="number" placeholder="39000" />
           <Field label="Best For" name="best_for" value={formData.best_for} onChange={handleChange} placeholder="Tech lovers" />
+
+          {/* Discovery classification */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Tier</label>
+            <select
+              name="tier"
+              value={formData.tier}
+              onChange={(e) => setFormData((prev) => ({ ...prev, tier: e.target.value }))}
+              className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Auto (from price)</option>
+              <option value="affordable">Affordable (≤ £32k)</option>
+              <option value="mid">Mid-Range (£32k – £46k)</option>
+              <option value="premium">Premium (£46k+)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Body Type</label>
+            <select
+              name="body_type"
+              value={formData.body_type}
+              onChange={(e) => setFormData((prev) => ({ ...prev, body_type: e.target.value }))}
+              className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Not specified</option>
+              <option value="suv">SUV</option>
+              <option value="hatchback">Hatchback</option>
+              <option value="sedan">Sedan</option>
+              <option value="crossover">Crossover</option>
+              <option value="coupe">Coupé</option>
+              <option value="estate">Estate</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Badge Tag (optional)</label>
+            <select
+              name="badge"
+              value={formData.badge}
+              onChange={(e) => setFormData((prev) => ({ ...prev, badge: e.target.value }))}
+              className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">Auto-assign</option>
+              <option value="Best Value">Best Value</option>
+              <option value="Long Range">Long Range</option>
+              <option value="Family Pick">Family Pick</option>
+              <option value="City Friendly">City Friendly</option>
+              <option value="Premium Choice">Premium Choice</option>
+            </select>
+          </div>
           <Field label="Description" name="description" value={formData.description} onChange={handleChange} textarea rows={3} span2 placeholder="Describe this EV..." />
           <Field label="Why People Love It" name="loved_reason" value={formData.loved_reason} onChange={handleChange} textarea rows={2} span2 placeholder="What makes it special..." />
         </div>

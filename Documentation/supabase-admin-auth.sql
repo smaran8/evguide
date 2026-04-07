@@ -116,3 +116,64 @@ begin
   end if;
 end;
 $$;
+
+-- Follow-up table for admin outreach (name, email, phone, login activity).
+create table if not exists public.user_followups (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  full_name text,
+  email text not null,
+  phone_number text,
+  first_seen_at timestamptz not null default timezone('utc', now()),
+  last_login_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+alter table public.user_followups enable row level security;
+
+drop policy if exists "user_followups_select_own" on public.user_followups;
+create policy "user_followups_select_own"
+  on public.user_followups
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "user_followups_insert_own" on public.user_followups;
+create policy "user_followups_insert_own"
+  on public.user_followups
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "user_followups_update_own" on public.user_followups;
+create policy "user_followups_update_own"
+  on public.user_followups
+  for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "user_followups_all_service_role" on public.user_followups;
+create policy "user_followups_all_service_role"
+  on public.user_followups
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
+drop trigger if exists set_user_followups_updated_at on public.user_followups;
+create trigger set_user_followups_updated_at
+before update on public.user_followups
+for each row
+execute function public.set_updated_at();
+
+-- Backfill existing users for immediate visibility.
+insert into public.user_followups (user_id, full_name, email, phone_number)
+select
+  u.id,
+  coalesce(u.raw_user_meta_data ->> 'full_name', p.full_name),
+  coalesce(u.email, ''),
+  u.raw_user_meta_data ->> 'phone_number'
+from auth.users u
+left join public.profiles p on p.id = u.id
+left join public.user_followups f on f.user_id = u.id
+where f.user_id is null;

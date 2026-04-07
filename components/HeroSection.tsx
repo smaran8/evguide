@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { trackEvent } from "@/lib/tracking/client";
 import type { EVModel } from "@/types";
 
 const BUDGETS = [
@@ -13,6 +14,23 @@ const BUDGETS = [
 ];
 
 type Props = { models: EVModel[] };
+
+function toBudgetRange(label: string): { min: number | null; max: number | null } {
+  switch (label) {
+    case "Under £20,000":
+      return { min: 0, max: 20000 };
+    case "£20,000 – £30,000":
+      return { min: 20000, max: 30000 };
+    case "£30,000 – £40,000":
+      return { min: 30000, max: 40000 };
+    case "£40,000 – £50,000":
+      return { min: 40000, max: 50000 };
+    case "Above £50,000":
+      return { min: 50000, max: null };
+    default:
+      return { min: null, max: null };
+  }
+}
 
 export default function HeroSection({ models }: Props) {
   const brands = [...new Set(models.map((m) => m.brand))];
@@ -79,7 +97,21 @@ export default function HeroSection({ models }: Props) {
 
               <select
                 value={budget}
-                onChange={(e) => setBudget(e.target.value)}
+                onChange={(e) => {
+                  const nextBudget = e.target.value;
+                  setBudget(nextBudget);
+
+                  const range = toBudgetRange(nextBudget);
+                  void trackEvent({
+                    eventType: "price_filter_used",
+                    eventValue: {
+                      filter_source: "hero_budget_dropdown",
+                      budget_label: nextBudget || "Any Budget",
+                      budget_min: range.min,
+                      budget_max: range.max,
+                    },
+                  });
+                }}
                 className="rounded-xl bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               >
                 <option value="">Any Budget</option>

@@ -1,11 +1,15 @@
 import { evModels } from "@/data/evModels";
-import type { EVModel } from "@/types";
+import type { EVModel, VehicleTier } from "@/types";
 
 export type DbEV = {
   id: string;
   brand: string;
   model: string;
   hero_image: string;
+  tier?: VehicleTier | null;
+  body_type?: string | null;
+  badge?: string | null;
+  popularity_score?: number | null;
   price: number;
   motor_capacity_kw: number;
   torque_nm: number;
@@ -59,11 +63,24 @@ export function resolveEvHeroImage(item: Pick<DbEV, "id" | "brand" | "model" | "
 }
 
 export function mapDbEV(item: DbEV): EVModel {
+  const tier =
+    item.tier === "affordable" || item.tier === "mid" || item.tier === "premium"
+      ? item.tier
+      : item.price <= 32000
+        ? "affordable"
+        : item.price <= 46000
+          ? "mid"
+          : "premium";
+
   return {
     id: item.id,
     brand: item.brand,
     model: item.model,
     heroImage: resolveEvHeroImage(item),
+    tier,
+    bodyType: item.body_type ?? null,
+    badge: item.badge ?? null,
+    popularityScore: item.popularity_score ?? 0,
     price: item.price,
     motorCapacityKw: item.motor_capacity_kw,
     torqueNm: item.torque_nm,

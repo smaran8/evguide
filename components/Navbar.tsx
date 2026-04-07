@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV_LINKS = [
-  { href: "/vehicles", label: "All Vehicles" },
+  { href: "/vehicles",  label: "All Vehicles" },
   { href: "/assistant", label: "Consultation" },
 ];
 

@@ -35,6 +35,9 @@ export async function PUT(
         description: body.description,
         best_for: body.best_for,
         loved_reason: body.loved_reason,
+        tier: body.tier ?? null,
+        body_type: body.body_type ?? null,
+        badge: body.badge ?? null,
       })
       .eq("id", id)
       .select()
