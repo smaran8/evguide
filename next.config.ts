@@ -1,6 +1,8 @@
+const isVercelBuild = process.env.VERCEL === "1";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  distDir: ".next-prod",
+  ...(isVercelBuild ? {} : { distDir: ".next-prod" }),
   images: {
     unoptimized: true,
     remotePatterns: [
