@@ -18,8 +18,16 @@ export default function CookieBanner() {
       }
     }
 
+    function handleConsentChanged() {
+      setConsent(readAnalyticsConsent());
+    }
+
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener("evguide-consent-changed", handleConsentChanged);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("evguide-consent-changed", handleConsentChanged);
+    };
   }, []);
 
   if (consent !== "unset") {
