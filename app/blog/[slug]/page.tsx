@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PremiumFooter from "@/components/home/PremiumFooter";
 import PremiumNavbar from "@/components/home/PremiumNavbar";
@@ -13,7 +13,7 @@ import type {
   RelatedArticleItem,
 } from "@/components/blog/article/types";
 import { getFeaturedBlogPosts, type FeaturedBlogPost } from "@/lib/blog";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicServerClient } from "@/lib/supabase/public-server";
 import { evModels } from "@/data/evModels";
 
 const ARTICLE_AUTHOR = "EVGuide AI Editorial";
@@ -123,7 +123,11 @@ function mapPostRow(row: BlogPostRow): FeaturedBlogPost {
 }
 
 async function getPost(slug: string): Promise<FeaturedBlogPost | null> {
-  const supabase = await createClient();
+  const supabase = createPublicServerClient();
+
+  if (!supabase) {
+    return null;
+  }
   const fullQuery = await supabase
     .from("blog_posts")
     .select(BLOG_SELECT_FULL)
@@ -154,7 +158,11 @@ async function getPost(slug: string): Promise<FeaturedBlogPost | null> {
 }
 
 async function getAllPublishedSlugs() {
-  const supabase = await createClient();
+  const supabase = createPublicServerClient();
+
+  if (!supabase) {
+    return [];
+  }
   const { data, error } = await supabase
     .from("blog_posts")
     .select("slug")

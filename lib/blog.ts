@@ -1,4 +1,4 @@
-﻿import { createClient } from "@/lib/supabase/server";
+import { createPublicServerClient } from "@/lib/supabase/public-server";
 
 export type FeaturedBlogPost = {
   id: string;
@@ -143,7 +143,11 @@ const DUMMY_BLOG_POSTS: FeaturedBlogPost[] = [
 ];
 
 async function getFeaturedBlogRows(limit: number) {
-  const supabase = await createClient();
+  const supabase = createPublicServerClient();
+
+  if (!supabase) {
+    return { data: [], usedLegacySelect: false };
+  }
 
   const fullQuery = await supabase
     .from("blog_posts")
