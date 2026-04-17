@@ -11,7 +11,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateVehicleQueryStatus, type QueryStatus } from "@/lib/actions/vehicleQueries";
+import {
+  updateVehicleQueryStatus,
+  type QueryStatus,
+} from "@/app/actions/vehicleQueries";
 
 // Next status in the cycle
 const NEXT_STATUS: Record<QueryStatus, QueryStatus> = {

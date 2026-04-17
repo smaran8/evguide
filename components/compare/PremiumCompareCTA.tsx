@@ -1,49 +1,121 @@
-﻿import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import CompareLeadCaptureButton from "@/components/leads/CompareLeadCaptureButton";
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowRight, MessageCircle, RotateCcw, Sparkles } from "lucide-react";
+import LeadCaptureModal from "@/components/leads/LeadCaptureModal";
 import type { EVModel } from "@/types";
 
-interface PremiumCompareCTAProps {
+interface Props {
   modelA: EVModel;
   modelB: EVModel;
+  /** The vehicle the page logic has determined is the overall winner */
+  winner: EVModel;
   onReset: () => void;
 }
 
-export default function PremiumCompareCTA({ modelA, modelB, onReset }: PremiumCompareCTAProps) {
+export default function PremiumCompareCTA({ modelA, modelB, winner, onReset }: Props) {
+  const [quoteOpen, setQuoteOpen] = useState(false);
+  const [expertOpen, setExpertOpen] = useState(false);
+
+  const winnerLabel = `${winner.brand} ${winner.model}`;
+  const defaultMsg = `I compared the ${modelA.brand} ${modelA.model} and ${modelB.brand} ${modelB.model} and would like a quotation for the ${winnerLabel}.`;
+
   return (
-    <section className="bg-[#F8FAF9] py-16 pb-32">
+    <section className="bg-[#F8FAF9] py-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="relative overflow-hidden rounded-[2.5rem] border border-[#E5E7EB] bg-gradient-to-br from-zinc-900 to-[#0A0A0A] p-8 text-center shadow-2xl md:p-14">
-          <div className="pointer-events-none absolute top-0 right-0 h-64 w-64 rounded-full bg-emerald-500/10 blur-[80px]" />
+        <div className="relative overflow-hidden rounded-3xl border border-[#1FBF9F]/25 bg-gradient-to-br from-[#E8F8F5] via-white to-white p-8 shadow-sm sm:p-12">
 
-          <div className="relative z-10">
-            <h2 className="mb-6 text-3xl font-extrabold text-white md:text-5xl">Ready for the next step?</h2>
-            <p className="mx-auto mb-10 max-w-2xl text-lg text-[#6B7280] md:text-xl">
-              If one option feels right, check affordability next. If not, compare another pair until the decision feels more comfortable.
-            </p>
+          {/* Decorative glow */}
+          <div className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-[#1FBF9F]/10 blur-[80px]" />
 
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href={`/finance?car=${modelA.id}`} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-8 py-4 font-bold text-black transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:bg-emerald-400 hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] sm:w-auto">
-                Check affordability for {modelA.brand} <ArrowRight className="w-5 h-5" />
+          <div className="relative z-10 flex flex-col items-start gap-8 md:flex-row md:items-center">
+
+            {/* Left — copy */}
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[#1FBF9F]" />
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#1FBF9F]">
+                  Next Step
+                </p>
+              </div>
+              <h2 className="mt-2 text-2xl font-extrabold text-[#1A1A1A] sm:text-3xl">
+                Want the best deal for the{" "}
+                <span className="text-[#1FBF9F]">{winnerLabel}</span>?
+              </h2>
+              <p className="mt-3 max-w-lg text-[#4B5563]">
+                Get a no-obligation quote tailored to your budget and requirements —
+                or speak directly with an EV expert who can guide you through finance
+                and availability.
+              </p>
+
+              {/* Finance link */}
+              <Link
+                href={`/finance?car=${winner.id}`}
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#1FBF9F] hover:underline"
+              >
+                Check monthly payments for the {winner.model}
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-              <Link href={`/finance?car=${modelB.id}`} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-cyan-500 px-8 py-4 font-bold text-black transition-all shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:bg-cyan-400 hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] sm:w-auto">
-                Check affordability for {modelB.brand} <ArrowRight className="w-5 h-5" />
-              </Link>
-              <CompareLeadCaptureButton modelA={modelA} modelB={modelB} />
             </div>
 
-            <div className="mt-12 border-t border-[#E5E7EB] pt-12">
-              <p className="mb-6 text-[#6B7280]">Still weighing your options?</p>
+            {/* Right — CTAs */}
+            <div className="flex w-full flex-col gap-3 sm:w-auto">
               <button
-                onClick={onReset}
-                className="rounded-xl border border-[#E5E7EB] bg-white/5 px-6 py-3 font-medium text-white transition-colors hover:bg-white/10"
+                onClick={() => setQuoteOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1FBF9F] px-8 py-4 text-sm font-bold text-white shadow-md transition hover:bg-[#17A589] sm:w-auto"
               >
-                Compare another pair
+                Get Quotation
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setExpertOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#E5E7EB] bg-white px-8 py-4 text-sm font-semibold text-[#374151] transition hover:bg-[#F8FAF9] sm:w-auto"
+              >
+                <MessageCircle className="h-4 w-4 text-[#6B7280]" />
+                Talk to an Expert
               </button>
             </div>
           </div>
+
+          {/* Compare another pair */}
+          <div className="relative z-10 mt-10 border-t border-[#E5E7EB] pt-6 text-center">
+            <p className="text-sm text-[#9CA3AF]">Still weighing your options?</p>
+            <button
+              onClick={onReset}
+              className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[#6B7280] hover:text-[#1A1A1A] transition-colors"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Compare a different pair
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Get Quotation modal — prefilled with winner */}
+      <LeadCaptureModal
+        open={quoteOpen}
+        onClose={() => setQuoteOpen(false)}
+        interestType="quote"
+        title={`Get a quote — ${winnerLabel}`}
+        description="We'll match you with the best available deal and confirm pricing within 24 hours."
+        submitLabel="Request Quotation"
+        vehicleId={winner.id}
+        vehicleLabel={winnerLabel}
+        defaultMessage={defaultMsg}
+      />
+
+      {/* Talk to Expert modal — framed as a compare enquiry */}
+      <LeadCaptureModal
+        open={expertOpen}
+        onClose={() => setExpertOpen(false)}
+        interestType="compare"
+        title="Talk to an EV expert"
+        description="Tell us what you need and we'll recommend the right EV for your situation."
+        submitLabel="Send Message"
+        vehicleLabel={`${modelA.brand} ${modelA.model} vs ${modelB.brand} ${modelB.model}`}
+        defaultMessage={`I compared the ${modelA.brand} ${modelA.model} and ${modelB.brand} ${modelB.model} and would like some guidance from an expert.`}
+      />
     </section>
   );
 }

@@ -14,6 +14,7 @@ export interface EVModel {
   id: string;
   brand: string;
   model: string;
+  variant?: string;
   heroImage: string;
   tier: VehicleTier;
   price: number;

@@ -13,8 +13,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { submitVehicleQuery } from "@/lib/actions/vehicleQueries";
-import type { VehicleQueryInput } from "@/lib/actions/vehicleQueries";
+import { submitVehicleQuery } from "@/app/actions/vehicleQueries";
+import type { VehicleQueryInput } from "@/app/actions/vehicleQueries";
 
 interface Props {
   /** EV data passed from the recommendation card */

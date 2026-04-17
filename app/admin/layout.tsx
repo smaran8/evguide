@@ -24,7 +24,8 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     .eq("id", user.id)
     .single();
 
-  if (error || profile?.role !== "admin") {
+  const role = profile?.role as string | undefined;
+  if (error || (role !== "admin" && role !== "super_admin")) {
     redirect("/");
   }
 

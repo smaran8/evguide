@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import LoginPrompt from "@/components/auth/LoginPrompt";
 import { Download, Landmark, ShieldCheck, X } from "lucide-react";
 import { bankOffers } from "@/data/bankOffers";
 import { createClient } from "@/lib/supabase/client";
@@ -186,33 +186,35 @@ export default function RecommendationQuoteModal({ result, onClose }: Recommenda
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <InputField label="Full name" value={fullName} onChange={setFullName} required />
-                <InputField label="Email" type="email" value={email} onChange={setEmail} required />
+            {checkingAuth ? (
+              <div className="mt-8 flex items-center justify-center py-10">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-300" />
               </div>
-              <InputField label="Phone" value={phone} onChange={setPhone} />
-
-              {checkingAuth ? (
-                <p className="text-sm text-zinc-500">Checking your account...</p>
-              ) : !isLoggedIn ? (
-                <div className="rounded-[1.25rem] border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-200">
-                  Please <Link href="/login" className="font-semibold underline">log in</Link> to save this estimate and download a copy.
+            ) : !isLoggedIn ? (
+              <div className="mt-8">
+                <LoginPrompt action="save & download this estimate" returnTo="/ai-match" />
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <InputField label="Full name" value={fullName} onChange={setFullName} required />
+                  <InputField label="Email" type="email" value={email} onChange={setEmail} required />
                 </div>
-              ) : null}
+                <InputField label="Phone" value={phone} onChange={setPhone} />
 
-              {error ? <div className="rounded-[1.25rem] border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-200">{error}</div> : null}
-              {success ? <div className="rounded-[1.25rem] border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-200">{success}</div> : null}
+                {error ? <div className="rounded-[1.25rem] border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-200">{error}</div> : null}
+                {success ? <div className="rounded-[1.25rem] border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-200">{success}</div> : null}
 
-              <button
-                type="submit"
-                disabled={submitting || checkingAuth || !isLoggedIn}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Download className="h-4 w-4" />
-                {submitting ? "Saving estimate..." : "Save & Download Estimate"}
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Download className="h-4 w-4" />
+                  {submitting ? "Saving estimate..." : "Save & Download Estimate"}
+                </button>
+              </form>
+            )}
           </div>
 
           <div className="p-6 md:p-8">

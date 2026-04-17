@@ -6,6 +6,7 @@ import { CookieConsentProvider } from "@/components/legal/CookieConsentProvider"
 import TrackEngagement from "@/components/tracking/TrackEngagement";
 import TrackPageView from "@/components/tracking/TrackPageView";
 import TrackRepeatVisit from "@/components/tracking/TrackRepeatVisit";
+import PlatformSessionInit from "@/components/platform/PlatformSessionInit";
 
 export const metadata: Metadata = {
   title: "EVGuide AI",
@@ -21,6 +22,7 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <body suppressHydrationWarning className="min-h-full flex flex-col">
         <CookieConsentProvider>
+          <PlatformSessionInit />
           <TrackPageView />
           <TrackEngagement />
           <TrackRepeatVisit />

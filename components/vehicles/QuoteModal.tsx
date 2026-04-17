@@ -4,6 +4,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, CheckCircle, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import LoginPrompt from "@/components/auth/LoginPrompt";
 
 interface QuoteModalProps {
   vehicle: { id: string; brand: string; model: string; price: number };
@@ -16,16 +18,26 @@ export default function QuoteModal({ vehicle, onClose }: QuoteModalProps) {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [authed, setAuthed] = useState<boolean | null>(null); // null = checking
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Mount guard — portals need the DOM
   useEffect(() => { setMounted(true); }, []);
 
+  // Auth check + pre-fill
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      setAuthed(!!user);
+      if (user) {
+        const name = (user.user_metadata?.full_name as string | undefined) || (user.user_metadata?.name as string | undefined) || "";
+        setForm((f) => ({ ...f, email: user.email ?? f.email, name: name || f.name }));
+      }
+    });
+  }, []);
+
   // ESC to close
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
@@ -69,7 +81,6 @@ export default function QuoteModal({ vehicle, onClose }: QuoteModalProps) {
       }
 
       setDone(true);
-      // Auto-close after 1.8 seconds
       setTimeout(() => onClose(), 1800);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -88,7 +99,6 @@ export default function QuoteModal({ vehicle, onClose }: QuoteModalProps) {
     >
       <div className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl">
 
-        {/* Close button — small, always visible */}
         <button
           onClick={onClose}
           aria-label="Close"
@@ -98,8 +108,16 @@ export default function QuoteModal({ vehicle, onClose }: QuoteModalProps) {
         </button>
 
         <div className="p-6">
+          {/* Header always visible */}
+          <div className="mb-5 pr-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">Get a Quote</p>
+            <h2 className="mt-1 text-xl font-bold text-slate-900">{vehicle.brand} {vehicle.model}</h2>
+            <p className="text-sm text-slate-500">
+              Listed at GBP {vehicle.price.toLocaleString()} · We'll confirm the best price for you.
+            </p>
+          </div>
+
           {done ? (
-            /* ── Success state — closes automatically ── */
             <div className="flex flex-col items-center gap-3 py-8 text-center">
               <CheckCircle className="h-14 w-14 text-emerald-500" />
               <p className="text-lg font-bold text-slate-900">Quote request sent!</p>
@@ -107,27 +125,20 @@ export default function QuoteModal({ vehicle, onClose }: QuoteModalProps) {
                 We'll be in touch about the {vehicle.brand} {vehicle.model} shortly.
               </p>
             </div>
+          ) : authed === null ? (
+            /* Checking auth */
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+            </div>
+          ) : !authed ? (
+            /* Not logged in */
+            <LoginPrompt action="request a quote" returnTo={`/vehicles`} />
           ) : (
+            /* Logged in — show form */
             <>
-              {/* Header */}
-              <div className="mb-5 pr-8">
-                <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">
-                  Get a Quote
-                </p>
-                <h2 className="mt-1 text-xl font-bold text-slate-900">
-                  {vehicle.brand} {vehicle.model}
-                </h2>
-                <p className="text-sm text-slate-500">
-                  Listed at GBP {vehicle.price.toLocaleString()} · We'll confirm the best price for you.
-                </p>
-              </div>
-
               {error && (
-                <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
-                  {error}
-                </div>
+                <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
               )}
-
               <form onSubmit={handleSubmit} className="space-y-3">
                 <input
                   type="text"
@@ -157,19 +168,13 @@ export default function QuoteModal({ vehicle, onClose }: QuoteModalProps) {
                   rows={3}
                   className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
                 />
-
                 <button
                   type="submit"
                   disabled={submitting}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-600 disabled:opacity-60"
                 >
-                  {submitting ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</>
-                  ) : (
-                    "Send Quote Request"
-                  )}
+                  {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : "Send Quote Request"}
                 </button>
-
                 <p className="text-center text-xs text-slate-400">
                   Press <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-500">Esc</kbd> or click outside to close
                 </p>

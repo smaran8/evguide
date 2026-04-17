@@ -1,34 +1,56 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdmin } from "@/lib/security/admin";
+import { requireSuperAdmin } from "@/lib/security/admin";
 
-const UUID_V4_OR_V1 =
+const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const auth = await requireAdmin();
-    if (!auth.ok) {
-      return auth.response;
-    }
+    // Only super admins can change roles
+    const auth = await requireSuperAdmin();
+    if (!auth.ok) return auth.response;
 
     const { id } = await params;
     const { role } = await request.json();
 
-    if (!id || !UUID_V4_OR_V1.test(id)) {
+    if (!id || !UUID_REGEX.test(id)) {
       return NextResponse.json({ error: "Invalid user id." }, { status: 400 });
     }
 
     if (role !== "admin" && role !== "user") {
-      return NextResponse.json({ error: "Invalid role. Must be 'admin' or 'user'." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid role. Must be 'admin' or 'user'." },
+        { status: 400 },
+      );
     }
 
+    // Prevent demoting super_admin via this endpoint
     const supabase = createAdminClient();
+    const { data: target } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", id)
+      .maybeSingle();
 
-    // Update only existing profile rows. Do not create profiles in role update APIs.
+    if (target?.role === "super_admin") {
+      return NextResponse.json(
+        { error: "Cannot change the role of a super admin." },
+        { status: 403 },
+      );
+    }
+
+    // Prevent super admin from demoting themselves
+    if (id === auth.userId) {
+      return NextResponse.json(
+        { error: "You cannot change your own role." },
+        { status: 403 },
+      );
+    }
+
     const { data, error } = await supabase
       .from("profiles")
       .update({ role })
@@ -42,8 +64,8 @@ export async function PUT(
 
     if (!data) {
       return NextResponse.json(
-        { error: "Profile not found for this user. Create profile during signup first." },
-        { status: 404 }
+        { error: "Profile not found for this user." },
+        { status: 404 },
       );
     }
 

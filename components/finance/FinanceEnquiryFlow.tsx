@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { trackEvent } from "@/lib/tracking/client";
+import { createClient } from "@/lib/supabase/client";
+import LoginPrompt from "@/components/auth/LoginPrompt";
 import FinanceProgressIndicator from "./FinanceProgressIndicator";
 import FinanceStepBankSelection from "./FinanceStepBankSelection";
 import FinanceStepVehicleSelection from "./FinanceStepVehicleSelection";
@@ -91,6 +93,7 @@ export default function FinanceEnquiryFlow({
   onResetSelections,
 }: FinanceEnquiryFlowProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const [vehicleQuery, setVehicleQuery] = useState("");
   const [contactForm, setContactForm] = useState<ContactForm>({
     name: "",
@@ -126,6 +129,16 @@ export default function FinanceEnquiryFlow({
     const maxTenure = Math.max(2, selectedBank?.maxTenureYears ?? 5);
     return Array.from({ length: maxTenure - 1 }, (_value, index) => index + 2);
   }, [selectedBank]);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      setAuthed(!!user);
+      if (user) {
+        const name = (user.user_metadata?.full_name as string | undefined) || (user.user_metadata?.name as string | undefined) || "";
+        setContactForm((f) => ({ ...f, email: user.email ?? f.email, name: name || f.name }));
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (termYears > (selectedBank?.maxTenureYears ?? termYears)) {
@@ -300,23 +313,29 @@ export default function FinanceEnquiryFlow({
             onContinue={() => setCurrentStep(4)}
           />
         ) : selectedBank && selectedVehicle ? (
-          <FinanceStepSummary
-            selectedBank={selectedBank}
-            selectedVehicle={selectedVehicle}
-            termYears={termYears}
-            availableTermYears={availableTermYears}
-            onTermYearsChange={onTermYearsChange}
-            summary={summary}
-            insuranceCost={insuranceCost}
-            processingFee={processingFee}
-            form={contactForm}
-            errors={contactErrors}
-            serverError={serverError}
-            submitting={submitting}
-            onFormChange={handleContactChange}
-            onBack={() => setCurrentStep(3)}
-            onSubmit={handleSubmit}
-          />
+          authed === false ? (
+            <div className="mx-auto max-w-md py-8">
+              <LoginPrompt action="submit your finance enquiry" returnTo="/finance" />
+            </div>
+          ) : (
+            <FinanceStepSummary
+              selectedBank={selectedBank}
+              selectedVehicle={selectedVehicle}
+              termYears={termYears}
+              availableTermYears={availableTermYears}
+              onTermYearsChange={onTermYearsChange}
+              summary={summary}
+              insuranceCost={insuranceCost}
+              processingFee={processingFee}
+              form={contactForm}
+              errors={contactErrors}
+              serverError={serverError}
+              submitting={submitting}
+              onFormChange={handleContactChange}
+              onBack={() => setCurrentStep(3)}
+              onSubmit={handleSubmit}
+            />
+          )
         ) : null}
       </div>
     </div>

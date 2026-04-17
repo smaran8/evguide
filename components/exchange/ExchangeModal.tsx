@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import {
   X, ArrowRight, ArrowLeft, ArrowLeftRight,
   CheckCircle, Upload, Loader2, Car, User, Camera,
   AlertCircle, Star,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import LoginPrompt from "@/components/auth/LoginPrompt";
 import type {
   ExchangeTargetEV,
   ExchangeFuelType,
@@ -163,12 +165,17 @@ const IMAGE_SLOTS = [
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function ExchangeModal({ targetEV, onClose }: ExchangeModalProps) {
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const [step, setStep]       = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult]   = useState<SubmitResult | null>(null);
   const [error, setError]     = useState("");
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => setAuthed(!!user));
+  }, []);
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -323,6 +330,26 @@ export default function ExchangeModal({ targetEV, onClose }: ExchangeModalProps)
   const imageForSlot = (type: string) => uploadedImages.find((img) => img.type === type);
 
   // ── Success screen ────────────────────────────────────────────────────────
+
+  if (authed === null) {
+    return (
+      <ModalShell onClose={onClose}>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-[#6B7280]" />
+        </div>
+      </ModalShell>
+    );
+  }
+
+  if (!authed) {
+    return (
+      <ModalShell onClose={onClose}>
+        <div className="px-2 py-4">
+          <LoginPrompt action="list your car for exchange" returnTo="/exchange" />
+        </div>
+      </ModalShell>
+    );
+  }
 
   if (result) {
     return (

@@ -10,6 +10,7 @@ type ConsultationRow = {
   email: string;
   phone: string | null;
   sector: string;
+  consultation_type: string | null;
   bank_name: string | null;
   ev_model_label: string | null;
   ev_models: { brand: string; model: string }[] | null;
@@ -23,7 +24,7 @@ async function getConsultations(): Promise<ConsultationRow[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("consultation_requests")
-    .select("id, full_name, email, phone, sector, bank_name, ev_model_label, ev_models(brand, model), preferred_time, notes, status, created_at")
+    .select("id, full_name, email, phone, sector, consultation_type, bank_name, ev_model_label, ev_models(brand, model), preferred_time, notes, status, created_at")
     .order("created_at", { ascending: false });
   return (data ?? []) as ConsultationRow[];
 }
@@ -70,7 +71,19 @@ export default async function AdminConsultationsPage() {
                     <p className="text-slate-500">{row.email}</p>
                   </td>
                   <td className="px-4 py-3 text-slate-700">
-                    {row.sector === "bank" ? row.bank_name : evLabel ?? "-"}
+                    <div className="flex items-center gap-2">
+                      {row.consultation_type === "quote" && (
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                          Quote
+                        </span>
+                      )}
+                      {row.consultation_type === "compare" && (
+                        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700">
+                          Compare
+                        </span>
+                      )}
+                      <span>{row.sector === "bank" ? row.bank_name : evLabel ?? "-"}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-slate-500">{row.phone ?? "-"}</td>
                   <td className="px-4 py-3 text-slate-500">
@@ -148,7 +161,7 @@ export default async function AdminConsultationsPage() {
 
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Automobile Consultations</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Vehicle Requests & Quotes</h2>
               <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
                 {automobileRows.length} requests
               </span>

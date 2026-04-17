@@ -5,20 +5,28 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const navLinks = [
-  { href: "/admin",                  label: "Dashboard",            exact: true },
-  { href: "/admin/audit",            label: "System Audit" },
-  { href: "/admin/evs",              label: "EV Models" },
-  { href: "/admin/evs/new",          label: "Add New EV" },
-  { href: "/admin/blog",             label: "Blog Posts" },
-  { href: "/admin/feedback",         label: "Feedback Moderation" },
-  { href: "/admin/consultations",    label: "Consultations" },
-  { href: "/admin/vehicle-queries",  label: "Vehicle Queries" },
-  { href: "/admin/exchange",          label: "Exchange Requests" },
-  { href: "/admin/leads",            label: "Lead Intelligence" },
-  { href: "/admin/crm",              label: "CRM Journey" },
-  { href: "/admin/users",            label: "Users & Access" },
-  { href: "/admin/seo",              label: "SEO Management" },
-  { href: "/admin/geo",              label: "GEO Regions" },
+  { href: "/admin",                    label: "Dashboard",            exact: true },
+  { href: "/admin/audit",              label: "System Audit" },
+  // ── Content ───────────────────────────────────────
+  { href: "/admin/evs",                label: "EV Models" },
+  { href: "/admin/evs/new",            label: "Add New EV" },
+  { href: "/admin/blog",               label: "Blog Posts" },
+  { href: "/admin/feedback",           label: "Feedback Moderation" },
+  // ── Leads & CRM ───────────────────────────────────
+  { href: "/admin/leads",              label: "Lead Pipeline" },
+  { href: "/admin/pipeline",           label: "Pipeline Board" },
+  { href: "/admin/recommendations",    label: "AI Recommendations" },
+  { href: "/admin/finance-requests",   label: "Finance Requests" },
+  { href: "/admin/consultations",      label: "Consultations" },
+  { href: "/admin/crm",                label: "CRM Journey" },
+  // ── Enquiries ─────────────────────────────────────
+  { href: "/admin/vehicle-queries",    label: "Vehicle Queries" },
+  { href: "/admin/exchange",           label: "Exchange Requests" },
+  // ── Platform ──────────────────────────────────────
+  { href: "/admin/users",              label: "Users & Access" },
+  { href: "/admin/seo",                label: "SEO Management" },
+  { href: "/admin/seo/keywords",       label: "SEO Keywords" },
+  { href: "/admin/geo",                label: "GEO Regions" },
 ];
 
 export default function AdminSidebar() {

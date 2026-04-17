@@ -1,6 +1,25 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+export type ContentBlock = {
+  type: "hero" | "features" | "faq" | "cta" | "text" | "stats";
+  heading?: string;
+  subheading?: string;
+  badge?: string;
+  body?: string;
+  href?: string;
+  label?: string;
+  items?: Array<{
+    label?: string;
+    value?: string;
+    description?: string;
+    question?: string;
+    answer?: string;
+  }>;
+};
+
+export type FaqItem = { question: string; answer: string };
+
 export type SeoPage = {
   id: string;
   page_slug: string;
@@ -11,6 +30,10 @@ export type SeoPage = {
   og_image: string | null;
   keywords: string[] | null;
   canonical_url: string | null;
+  h1_heading: string | null;
+  content_blocks: ContentBlock[];
+  faq_schema: FaqItem[];
+  auto_updated_at: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
