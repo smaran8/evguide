@@ -50,3 +50,19 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# Claude Code memory / session files
+.claude/
+
+# Local Next.js dev build
+/.next-local/
+
+# Supabase temp files
+supabase/.temp/
+
+# User-uploaded exchange images (stored in Supabase storage in prod)
+/public/uploads/exchange/
+
+# Scratch notes
+\# Code Citations.txt
+\# Code Citations1.txt
