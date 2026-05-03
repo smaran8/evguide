@@ -266,7 +266,7 @@ export default async function BlogPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F8FAF9] text-[#1A1A1A]">
+    <main className="min-h-screen bg-[#0A0A0A] text-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionStructuredData) }}

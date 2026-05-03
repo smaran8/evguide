@@ -25,7 +25,7 @@ export default function BlogHero({
             Make smarter EV decisions with expert content, comparisons, and cost breakdowns.
           </p>
 
-          <div className="mx-auto mt-10 max-w-3xl rounded-[2rem] border border-[#E5E7EB] bg-[#F8FAF9] p-2 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+          <div className="mx-auto mt-10 max-w-3xl rounded-[2rem] border border-white/10 bg-white/[0.06] p-2 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
             <label className="flex items-center gap-3 rounded-[1.4rem] border border-white/6 bg-white/80 px-5 py-4 text-left transition focus-within:border-emerald-400/30 focus-within:shadow-[0_0_0_1px_rgba(16,185,129,0.25)]">
               <Search className="h-5 w-5 text-[#6B7280]" />
               <input
@@ -33,7 +33,7 @@ export default function BlogHero({
                 onChange={(event) => onQueryChange(event.target.value)}
                 type="search"
                 placeholder="Search buying guides, EV comparisons, charging advice..."
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#6B7280] sm:text-base"
+                className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500 sm:text-base"
                 aria-label="Search blog articles"
               />
             </label>

@@ -13,7 +13,7 @@ export default function BlogFilter({
 }: BlogFilterProps) {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div className="inline-flex w-full flex-wrap gap-3 rounded-[2rem] border border-white/10 bg-white/[0.03] p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+      <div className="inline-flex w-full flex-wrap gap-3 rounded-[2rem] border border-white/10 bg-white/[0.06] p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] backdrop-blur-xl">
         {categories.map((category) => {
           const active = activeCategory === category;
 

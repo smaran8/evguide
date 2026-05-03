@@ -52,7 +52,7 @@ export default function BuyerJourneySection() {
               key={step.title}
               className="group rounded-[2rem] border border-[#E5E7EB] bg-white/88 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-cyan-300/16 hover:bg-[#151515]"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-[#F8FAF9] text-cyan-200">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08] text-cyan-300">
                 <Icon className="h-5 w-5" />
               </div>
               <p className="mt-6 text-xs font-semibold uppercase tracking-[0.22em] text-[#6B7280]">Step 0{index + 1}</p>
