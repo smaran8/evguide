@@ -25,6 +25,13 @@ const RANGE_PRESETS = [
   { label: "500+ km", min: 500 },
 ];
 
+const CHARGING_SPEED_PRESETS = [
+  { label: "50+ kW", min: 50 },
+  { label: "100+ kW", min: 100 },
+  { label: "150+ kW", min: 150 },
+  { label: "200+ kW", min: 200 },
+];
+
 const SEAT_OPTIONS = [2, 4, 5, 7];
 
 export default function VehicleFilters({ filters, onChange, vehicles }: Props) {
@@ -151,7 +158,7 @@ export default function VehicleFilters({ filters, onChange, vehicles }: Props) {
           </FilterGroup>
 
           {/* Range */}
-          <FilterGroup label="Min Range">
+          <FilterGroup label="Minimum real-world range">
             <div className="flex flex-wrap gap-2">
               {RANGE_PRESETS.map((r) => (
                 <Chip
@@ -167,6 +174,42 @@ export default function VehicleFilters({ filters, onChange, vehicles }: Props) {
                 onClick={() => update({ rangeMin: null })}
               >
                 Any
+              </Chip>
+            </div>
+          </FilterGroup>
+
+          {/* Fast charging */}
+          <FilterGroup label="Fast charging">
+            <div className="flex flex-wrap gap-2">
+              {CHARGING_SPEED_PRESETS.map((preset) => (
+                <Chip
+                  key={preset.label}
+                  active={filters.chargingSpeedDcMin === preset.min}
+                  onClick={() => update({ chargingSpeedDcMin: preset.min })}
+                >
+                  {preset.label}
+                </Chip>
+              ))}
+              <Chip
+                active={filters.chargingSpeedDcMin === null}
+                onClick={() => update({ chargingSpeedDcMin: null })}
+              >
+                Any
+              </Chip>
+            </div>
+          </FilterGroup>
+
+          {/* Condition */}
+          <FilterGroup label="Condition">
+            <div className="flex flex-wrap gap-2">
+              <Chip active={filters.condition === null} onClick={() => update({ condition: null })}>
+                All
+              </Chip>
+              <Chip active={filters.condition === "new"} onClick={() => update({ condition: "new" })}>
+                New
+              </Chip>
+              <Chip active={filters.condition === "used"} onClick={() => update({ condition: "used" })}>
+                Used
               </Chip>
             </div>
           </FilterGroup>

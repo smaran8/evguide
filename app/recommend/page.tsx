@@ -1,20 +1,21 @@
-﻿import type { Metadata } from "next";
-import PremiumFooter from "@/components/home/PremiumFooter";
+import type { Metadata } from "next";
 import PremiumNavbar from "@/components/home/PremiumNavbar";
-import RecommendationForm from "@/components/recommendation/RecommendationForm";
+import EVChatInterface from "@/components/assistant/EVChatInterface";
 
 export const metadata: Metadata = {
   title: "AI Match | EV Guide",
   description:
-    "Answer a few guided questions and get a calm, confidence-building EV shortlist with match score, monthly cost, and clear reasons why each model fits.",
+    "Chat with our AI and find your perfect EV based on your budget, driving habits, and lifestyle.",
 };
 
 export default function RecommendPage() {
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#07090B] text-zinc-100">
+    <div className="flex min-h-screen flex-col bg-[#07090B]">
       <PremiumNavbar />
-      <RecommendationForm />
-      <PremiumFooter />
-    </main>
+      {/* PremiumNavbar is fixed h-20 (80px) */}
+      <div className="pt-20 flex-1">
+        <EVChatInterface navOffset={80} />
+      </div>
+    </div>
   );
 }

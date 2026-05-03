@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import LeadScoreBadge from "@/components/LeadScoreBadge";
 import {
@@ -34,6 +34,11 @@ const STAGE_FILTERS: Array<{ value: LeadPipelineStage | "all"; label: string }> 
   { value: "converted", label: "Converted"   },
   { value: "lost",      label: "Lost"        },
 ];
+
+function shortLeadIdentity(lead: PipelineLeadRow) {
+  const rawId = lead.session_id ?? lead.profile_id ?? lead.id;
+  return rawId ? `${rawId.slice(0, 12)}...` : "No session";
+}
 
 export default function AdminLeadTable({ leads }: Props) {
   const [categoryFilter, setCategoryFilter] = useState<LeadScoreCategory | "all">("all");
@@ -132,7 +137,7 @@ export default function AdminLeadTable({ leads }: Props) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((lead) => (
-                <>
+                <Fragment key={lead.id}>
                   <tr
                     key={lead.id}
                     className="hover:bg-slate-50 cursor-pointer"
@@ -146,7 +151,7 @@ export default function AdminLeadTable({ leads }: Props) {
                       {lead.email && (
                         <p className="text-slate-400 text-xs">{lead.email}</p>
                       )}
-                      <p className="text-slate-400 text-[10px] font-mono">{lead.session_id.slice(0, 12)}…</p>
+                      <p className="text-slate-400 text-[10px] font-mono">{shortLeadIdentity(lead)}</p>
                     </td>
 
                     {/* Score */}
@@ -306,7 +311,7 @@ export default function AdminLeadTable({ leads }: Props) {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

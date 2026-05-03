@@ -11,6 +11,7 @@ import {
   CircleDollarSign,
   Cpu,
   Map,
+  MapPin,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -23,7 +24,7 @@ import {
   type MatchQuestionOption,
 } from "./recommendationEngine";
 
-const questionIcons = [CircleDollarSign, Map, BatteryCharging, CarFront, Sparkles, ShieldCheck];
+const questionIcons = [CircleDollarSign, Map, BatteryCharging, CarFront, Sparkles, ShieldCheck, MapPin];
 
 export default function RecommendationForm() {
   const [started, setStarted] = useState(false);
@@ -44,6 +45,7 @@ export default function RecommendationForm() {
     bodyType: "What kind of EV would feel easiest to live with?",
     priority: "What matters most in the final decision?",
     condition: "Would you like us to consider new, used, or both?",
+    postcode: "Enter your postcode for local charging and incentives.",
   };
 
   function updateAnswer(value: string) {
@@ -244,15 +246,35 @@ export default function RecommendationForm() {
                   </div>
                 </div>
 
-                <div className="mt-8 grid gap-4 md:grid-cols-2">
-                  {currentQuestion.options.map((option) => (
-                    <QuestionCard
-                      key={option.value}
-                      option={option}
-                      selected={currentValue === option.value}
-                      onClick={() => updateAnswer(option.value)}
-                    />
-                  ))}
+                <div className="mt-8">
+                  {currentQuestion.type === "text" ? (
+                    <div className="rounded-[1.75rem] border border-white/10 bg-black/20 p-6">
+                      <label className="block text-sm font-medium text-zinc-200">
+                        Postcode
+                      </label>
+                      <input
+                        type="text"
+                        value={String(currentValue)}
+                        onChange={(event) => updateAnswer(event.target.value)}
+                        placeholder={currentQuestion.placeholder ?? "Enter postcode"}
+                        className="mt-4 w-full rounded-3xl border border-white/10 bg-[#0B1116] px-5 py-4 text-lg text-white outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+                      />
+                      <p className="mt-3 text-sm leading-6 text-zinc-500">
+                        This is optional and only used to give a better estimate for charging and incentives.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {currentQuestion.options?.map((option) => (
+                        <QuestionCard
+                          key={option.value}
+                          option={option}
+                          selected={currentValue === option.value}
+                          onClick={() => updateAnswer(option.value)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-8 flex items-center justify-between gap-4">

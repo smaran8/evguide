@@ -1,7 +1,8 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CarFront, HandCoins, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight, CarFront, HandCoins, Sparkles, Bookmark } from "lucide-react";
 import RecommendationCard from "./RecommendationCard";
 import type { MatchAnswers, MatchResult } from "./recommendationEngine";
 
@@ -49,7 +50,29 @@ const answerLabels = {
   },
 };
 
+const STORAGE_KEY = "evguide_saved_match";
+
 export default function RecommendationResults({ results, answers, onReset }: RecommendationResultsProps) {
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const existing = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+    setSaved(Boolean(existing));
+  }, []);
+
+  function saveMatch() {
+    if (typeof window === "undefined") return;
+    const payload = {
+      savedAt: new Date().toISOString(),
+      answers,
+      results: results.map((item) => ({ id: item.model.id, matchScore: item.matchScore, monthlyCost: item.monthlyCost })),
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    setSaved(true);
+  }
+
+  const compareHref = `/compare?carA=${results[0]?.model.id ?? ""}&carB=${results[1]?.model.id ?? ""}`;
+
   return (
     <section className="bg-[#07090B] pb-24 pt-10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -71,14 +94,24 @@ export default function RecommendationResults({ results, answers, onReset }: Rec
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={onReset}
-              className="inline-flex items-center gap-2 self-start rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:border-white/20 hover:bg-white/10"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retake Match
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={saveMatch}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-emerald-500/10 px-5 py-3 text-sm font-semibold text-emerald-300 transition hover:border-emerald-400/30 hover:bg-emerald-500/15"
+              >
+                <Bookmark className="h-4 w-4" />
+                {saved ? "Match saved" : "Save this match"}
+              </button>
+
+              <Link
+                href={compareHref}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:border-white/20 hover:bg-white/10"
+              >
+                Compare these cars
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">

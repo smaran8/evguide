@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { notifySecurityEvent } from "@/lib/security/alerts";
 
+export type AdminDepartment =
+  | "management" | "sales" | "finance" | "technical"
+  | "marketing"  | "support" | "operations";
+
 export type AdminGuardResult =
   | { ok: true; userId: string; role: "admin" | "super_admin" }
   | { ok: false; response: NextResponse };
@@ -70,6 +74,50 @@ export async function requireSuperAdmin(): Promise<AdminGuardResult> {
       ok: false,
       response: NextResponse.json(
         { error: "Only super admins can perform this action." },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return result;
+}
+
+/**
+ * Allows super_admin unconditionally.
+ * Allows admin only if their department is in the `allowed` list.
+ * management department admins are treated as having full data access.
+ */
+export async function requireAdminForDepartments(
+  allowed: AdminDepartment[],
+): Promise<AdminGuardResult> {
+  const result = await requireAdmin();
+  if (!result.ok) return result;
+
+  // super_admin bypasses all department restrictions
+  if (result.role === "super_admin") return result;
+
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("department")
+    .eq("id", result.userId)
+    .single();
+
+  const dept = profile?.department as AdminDepartment | null;
+
+  // management has full data access across departments
+  if (dept === "management") return result;
+
+  if (!dept || !allowed.includes(dept)) {
+    await notifySecurityEvent({
+      type: "admin-forbidden",
+      message: "Admin attempted to access a section outside their department.",
+      details: { userId: result.userId, department: dept ?? "none", required: allowed },
+    });
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: "You do not have access to this section." },
         { status: 403 },
       ),
     };

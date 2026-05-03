@@ -123,6 +123,17 @@ export default function BookTestDriveWidget() {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // Allow other components to open the widget pre-filled with a car
+  useEffect(() => {
+    function onOpenTestDrive(e: Event) {
+      const carId = (e as CustomEvent<{ carId?: string }>).detail?.carId;
+      if (carId) setFormData((prev) => ({ ...prev, carId }));
+      setOpen(true);
+    }
+    window.addEventListener("open-test-drive", onOpenTestDrive);
+    return () => window.removeEventListener("open-test-drive", onOpenTestDrive);
+  }, []);
+
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => {

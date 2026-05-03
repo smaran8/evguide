@@ -10,14 +10,7 @@ interface PremiumCompareHeroProps {
   onSwap: () => void;
 }
 
-export default function PremiumCompareHero({ 
-  models, 
-  selectedA, 
-  selectedB, 
-  onSelectA, 
-  onSelectB,
-  onSwap
-}: PremiumCompareHeroProps) {
+export default function PremiumCompareHero({ models, selectedA, selectedB, onSelectA, onSelectB, onSwap }: PremiumCompareHeroProps) {
   return (
     <section className="relative pt-32 pb-16 bg-[#F8FAF9] overflow-hidden border-b border-[#E5E7EB]">
       {/* Background Glow */}
@@ -35,52 +28,69 @@ export default function PremiumCompareHero({
         </p>
 
         {/* The Selector UI */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 max-w-4xl mx-auto p-4 bg-white border border-[#E5E7EB] rounded-[2rem] shadow-2xl relative">
-          
-          <div className="w-full flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Car className="h-5 w-5 text-emerald-500/50" />
-            </div>
-            <select
-              value={selectedA}
-              onChange={(e) => onSelectA(e.target.value)}
-              className="appearance-none w-full bg-[#F8FAF9] border border-[#E5E7EB] text-[#1A1A1A] pl-12 pr-10 py-5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#D1F2EB] focus:border-[#1FBF9F] transition-all font-semibold text-lg hover:bg-[#E8F8F5] cursor-pointer"
-            >
-              <option value="" disabled>Select Vehicle A</option>
-              {models.map(m => (
-                <option key={m.id} value={m.id} disabled={m.id === selectedB}>{m.brand} {m.model}</option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-              <svg className="h-4 w-4 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+        <div className="flex flex-col sm:flex-row items-center gap-4 max-w-3xl mx-auto">
+          {/* Car A */}
+          <div className="relative flex-1 w-full">
+            <label className="mb-3 block text-xs font-semibold uppercase tracking-[0.24em] text-[#6B7280]">
+              Vehicle A
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Car className="h-5 w-5 text-[#6B7280]" />
+              </div>
+              <select
+                value={selectedA}
+                onChange={(e) => onSelectA(e.target.value)}
+                className="appearance-none w-full bg-[#F8FAF9] border border-[#E5E7EB] text-[#1A1A1A] pl-12 pr-10 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#D1F2EB] focus:border-[#1FBF9F] transition-all font-semibold text-sm hover:bg-[#E8F8F5] cursor-pointer"
+              >
+                <option value="">Select a vehicle</option>
+                {models.map((m) => (
+                  <option key={m.id} value={m.id} disabled={m.id === selectedB}>
+                    {m.brand} {m.model}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <svg className="h-4 w-4 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+              </div>
             </div>
           </div>
 
-          <button 
+          {/* Swap button */}
+          <button
+            type="button"
             onClick={onSwap}
             disabled={!selectedA || !selectedB}
-            className="hidden md:flex items-center justify-center w-14 h-14 bg-[#1FBF9F] hover:bg-[#17A589] disabled:bg-[#E5E7EB] disabled:text-[#6B7280] disabled:opacity-50 text-white rounded-full transition-all shadow-md z-10 -mx-10 shrink-0 border-4 border-white"
-            title="Swap vehicles"
+            className="mt-6 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] shadow-sm transition hover:border-[#1FBF9F] hover:text-[#1FBF9F] disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Swap vehicles"
           >
-            <ArrowLeftRight className="w-6 h-6" />
+            <ArrowLeftRight className="h-4 w-4" />
           </button>
 
-          <div className="w-full flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Car className="h-5 w-5 text-cyan-500/50" />
-            </div>
-            <select
-              value={selectedB}
-              onChange={(e) => onSelectB(e.target.value)}
-              className="appearance-none w-full bg-[#F8FAF9] border border-[#E5E7EB] text-[#1A1A1A] pl-12 pr-10 py-5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#D1F2EB] focus:border-[#1FBF9F] transition-all font-semibold text-lg hover:bg-[#E8F8F5] cursor-pointer"
-            >
-              <option value="" disabled>Select Vehicle B</option>
-              {models.map(m => (
-                <option key={m.id} value={m.id} disabled={m.id === selectedA}>{m.brand} {m.model}</option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-              <svg className="h-4 w-4 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+          {/* Car B */}
+          <div className="relative flex-1 w-full">
+            <label className="mb-3 block text-xs font-semibold uppercase tracking-[0.24em] text-[#6B7280]">
+              Vehicle B
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Car className="h-5 w-5 text-[#6B7280]" />
+              </div>
+              <select
+                value={selectedB}
+                onChange={(e) => onSelectB(e.target.value)}
+                className="appearance-none w-full bg-[#F8FAF9] border border-[#E5E7EB] text-[#1A1A1A] pl-12 pr-10 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#D1F2EB] focus:border-[#1FBF9F] transition-all font-semibold text-sm hover:bg-[#E8F8F5] cursor-pointer"
+              >
+                <option value="">Select a vehicle</option>
+                {models.map((m) => (
+                  <option key={m.id} value={m.id} disabled={m.id === selectedA}>
+                    {m.brand} {m.model}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <svg className="h-4 w-4 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+              </div>
             </div>
           </div>
         </div>

@@ -193,7 +193,7 @@ export default async function AdminSeoKeywordsPage() {
         <p className="mt-1 text-sm text-blue-700">
           Clicking <strong>Sync to Pages</strong> applies all keywords with trend score ≥ 70 to
           their target SEO pages. It merges the keyword list and regenerates FAQ content blocks.
-          Keywords marked <strong>Locked</strong> have been manually edited and won't have their
+          Keywords marked <strong>Locked</strong> have been manually edited and won&apos;t have their
           settings overwritten by future syncs — only their keywords are applied to pages.
         </p>
       </div>

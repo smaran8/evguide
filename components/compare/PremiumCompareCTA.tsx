@@ -1,25 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, MessageCircle, RotateCcw, Sparkles } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import CompareQuotationModal from "@/components/compare/CompareQuotationModal";
 import LeadCaptureModal from "@/components/leads/LeadCaptureModal";
 import type { EVModel } from "@/types";
 
 interface Props {
   modelA: EVModel;
   modelB: EVModel;
-  /** The vehicle the page logic has determined is the overall winner */
   winner: EVModel;
   onReset: () => void;
+  autoOpenQuote?: boolean;
 }
 
-export default function PremiumCompareCTA({ modelA, modelB, winner, onReset }: Props) {
+export default function PremiumCompareCTA({ modelA, modelB, winner, onReset, autoOpenQuote }: Props) {
+  const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [expertOpen, setExpertOpen] = useState(false);
 
+  // Auto-open the modal after returning from login
+  useEffect(() => {
+    if (!autoOpenQuote) return;
+    void supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setQuoteOpen(true);
+    });
+  }, [autoOpenQuote, supabase]);
+
   const winnerLabel = `${winner.brand} ${winner.model}`;
-  const defaultMsg = `I compared the ${modelA.brand} ${modelA.model} and ${modelB.brand} ${modelB.model} and would like a quotation for the ${winnerLabel}.`;
+
+  async function handleGetQuotation() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      const next = encodeURIComponent(`/compare?carA=${modelA.id}&carB=${modelB.id}&openQuote=true`);
+      router.push(`/login?next=${next}`);
+      return;
+    }
+    setQuoteOpen(true);
+  }
 
   return (
     <section className="bg-[#F8FAF9] py-16">
@@ -44,9 +66,8 @@ export default function PremiumCompareCTA({ modelA, modelB, winner, onReset }: P
                 <span className="text-[#1FBF9F]">{winnerLabel}</span>?
               </h2>
               <p className="mt-3 max-w-lg text-[#4B5563]">
-                Get a no-obligation quote tailored to your budget and requirements —
-                or speak directly with an EV expert who can guide you through finance
-                and availability.
+                Get a no-obligation quote with full pricing — vehicle cost, finance at the best available
+                bank rate, and insurance estimate — or speak directly with an EV expert.
               </p>
 
               {/* Finance link */}
@@ -62,13 +83,15 @@ export default function PremiumCompareCTA({ modelA, modelB, winner, onReset }: P
             {/* Right — CTAs */}
             <div className="flex w-full flex-col gap-3 sm:w-auto">
               <button
-                onClick={() => setQuoteOpen(true)}
+                type="button"
+                onClick={handleGetQuotation}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1FBF9F] px-8 py-4 text-sm font-bold text-white shadow-md transition hover:bg-[#17A589] sm:w-auto"
               >
                 Get Quotation
                 <ArrowRight className="h-4 w-4" />
               </button>
               <button
+                type="button"
                 onClick={() => setExpertOpen(true)}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#E5E7EB] bg-white px-8 py-4 text-sm font-semibold text-[#374151] transition hover:bg-[#F8FAF9] sm:w-auto"
               >
@@ -82,6 +105,7 @@ export default function PremiumCompareCTA({ modelA, modelB, winner, onReset }: P
           <div className="relative z-10 mt-10 border-t border-[#E5E7EB] pt-6 text-center">
             <p className="text-sm text-[#9CA3AF]">Still weighing your options?</p>
             <button
+              type="button"
               onClick={onReset}
               className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[#6B7280] hover:text-[#1A1A1A] transition-colors"
             >
@@ -92,20 +116,16 @@ export default function PremiumCompareCTA({ modelA, modelB, winner, onReset }: P
         </div>
       </div>
 
-      {/* Get Quotation modal — prefilled with winner */}
-      <LeadCaptureModal
+      {/* Quotation modal — auth-gated, includes full pricing breakdown */}
+      <CompareQuotationModal
         open={quoteOpen}
         onClose={() => setQuoteOpen(false)}
-        interestType="quote"
-        title={`Get a quote — ${winnerLabel}`}
-        description="We'll match you with the best available deal and confirm pricing within 24 hours."
-        submitLabel="Request Quotation"
-        vehicleId={winner.id}
-        vehicleLabel={winnerLabel}
-        defaultMessage={defaultMsg}
+        vehicle={winner}
+        modelA={modelA}
+        modelB={modelB}
       />
 
-      {/* Talk to Expert modal — framed as a compare enquiry */}
+      {/* Talk to Expert modal */}
       <LeadCaptureModal
         open={expertOpen}
         onClose={() => setExpertOpen(false)}

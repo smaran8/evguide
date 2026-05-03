@@ -6,12 +6,12 @@ export type SortConfig = {
 };
 
 export const SORT_OPTIONS: SortConfig[] = [
-  { value: "recommended", label: "Recommended" },
-  { value: "price_low", label: "Price: Low to High" },
+  { value: "recommended", label: "Highest match score" },
+  { value: "price_low", label: "Lowest monthly cost" },
   { value: "price_high", label: "Price: High to Low" },
-  { value: "range", label: "Longest Range" },
+  { value: "range", label: "Best range" },
   { value: "newest", label: "Newest" },
-  { value: "best_value", label: "Best Value" },
+  { value: "best_value", label: "Best value" },
 ];
 
 function bestValueScore(v: PersonalizedVehicleCard): number {

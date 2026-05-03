@@ -18,6 +18,47 @@ type RecWithConsult = AiRecommendationRow & {
   } | null;
 };
 
+function isMissingTableError(message: string | null | undefined, table: string) {
+  if (!message) return false;
+  return (
+    message.includes(`Could not find the table 'public.${table}'`) ||
+    message.includes(`relation "${table}" does not exist`)
+  );
+}
+
+function mapLegacyRecommendation(row: Record<string, unknown>): RecWithConsult {
+  const label = [row.ev_brand, row.ev_model_name].filter(Boolean).join(" ") || "Unknown";
+  const score = (row.score as number | null) ?? 0;
+  const rank = (row.rank as number | null) ?? 0;
+  const reasons = (row.reasons as string[] | null) ?? [];
+
+  return {
+    id: row.id as string,
+    consultation_id: (row.preference_id as string | null) ?? (row.id as string),
+    session_id: null,
+    profile_id: (row.user_id as string | null) ?? null,
+    recommended_vehicle_ids: [],
+    primary_vehicle_id: null,
+    recommendation_payload: {
+      results: [
+        {
+          vehicle_label: label,
+          match_score: score,
+          rank,
+          estimated_emi: row.estimated_emi,
+          reasons,
+        },
+      ],
+      preference_id: row.preference_id,
+      source: "recommendations",
+    },
+    explanation: reasons.join(" "),
+    confidence_score: score,
+    created_at: row.created_at as string,
+    consultation: null,
+  };
+}
+
 async function getRecommendations(): Promise<RecWithConsult[]> {
   const admin = createAdminClient();
   const { data, error } = await admin
@@ -29,6 +70,21 @@ async function getRecommendations(): Promise<RecWithConsult[]> {
     .limit(200);
 
   if (error || !data) {
+    if (isMissingTableError(error?.message, "ai_recommendations")) {
+      const fallback = await admin
+        .from("recommendations")
+        .select("id, preference_id, user_id, ev_brand, ev_model_name, score, rank, estimated_emi, reasons, created_at")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (fallback.error || !fallback.data) {
+        console.error("[admin/recommendations]", fallback.error?.message);
+        return [];
+      }
+
+      return (fallback.data as Record<string, unknown>[]).map(mapLegacyRecommendation);
+    }
+
     console.error("[admin/recommendations]", error?.message);
     return [];
   }

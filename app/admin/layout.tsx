@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -29,9 +31,17 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     redirect("/");
   }
 
+  // department column is added via manual migration — graceful fallback if not yet applied
+  const { data: deptData } = await supabase
+    .from("profiles")
+    .select("department")
+    .eq("id", user.id)
+    .single();
+  const department = (deptData?.department as string | null) ?? null;
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      <AdminSidebar />
+      <AdminSidebar role={role!} department={department} />
       <main className="flex-1 overflow-y-auto p-8">
         {children}
       </main>

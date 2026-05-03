@@ -85,8 +85,10 @@ export default function PremiumVehicleCard({ vehicle }: PremiumVehicleCardProps)
         <div className="mt-auto mb-6 grid grid-cols-3 gap-2 border-y border-[#E5E7EB] py-4">
           <div className="flex flex-col items-center justify-center rounded-xl bg-[#F8FAF9] p-2">
             <Battery className="mb-1 h-4 w-4 text-[#6B7280]" />
-            <div className="text-sm font-semibold text-[#1A1A1A]">{vehicle.rangeKm}km</div>
-            <div className="text-[10px] uppercase text-[#374151]">Range</div>
+            <div className="text-sm font-semibold text-[#1A1A1A]">
+              ~{vehicle.realWorldRangeMiles ?? Math.round(vehicle.rangeKm * 0.621371)} mi
+            </div>
+            <div className="text-[10px] uppercase text-[#374151]">Real-world range</div>
           </div>
           <div className="flex flex-col items-center justify-center rounded-xl bg-[#F8FAF9] p-2">
             <Zap className="mb-1 h-4 w-4 text-[#6B7280]" />

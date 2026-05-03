@@ -131,12 +131,11 @@ export interface PipelineLeadRow {
 export async function getPipelineLeads(): Promise<PipelineLeadRow[]> {
   const admin = createAdminClient();
 
-  // 1. Lead scores (primary)
+  // 1. Lead scores — actual columns: user_id, session_id, score, user_type, last_activity_at
+  //    (profile_id / consultation_id / category / scoring_reasons / created_at do NOT exist in the real table)
   const { data: scores, error: scoresErr } = await admin
     .from("lead_scores")
-    .select(
-      "id, session_id, profile_id, consultation_id, score, category, scoring_reasons, last_calculated_at, created_at",
-    )
+    .select("id, user_id, session_id, score, user_type, last_activity_at, updated_at")
     .order("score", { ascending: false })
     .limit(500);
 
@@ -145,37 +144,31 @@ export async function getPipelineLeads(): Promise<PipelineLeadRow[]> {
     return [];
   }
 
-  // 2. Batch-fetch related data for found session/consultation/profile IDs
-  const sessionIds     = [...new Set(scores.map((s) => s.session_id).filter(Boolean))];
-  const consultationIds = [...new Set(scores.map((s) => s.consultation_id).filter(Boolean))];
-  const profileIds     = [...new Set(scores.map((s) => s.profile_id).filter(Boolean))];
+  // Only logged-in users should appear on the admin lead boards.
+  // user_id mirrors profiles.id (same UUID — profiles is seeded from auth.users).
+  const loggedInScores = (scores as Record<string, unknown>[]).filter((s) => Boolean(s.user_id));
+  const profileIds = [...new Set(loggedInScores.map((s) => s.user_id as string).filter(Boolean))];
+  const sessionIds = [...new Set(loggedInScores.map((s) => s.session_id as string | null).filter(Boolean))] as string[];
 
+  // 2. Parallel lookups — consultations keyed by profile_id (no consultation_id on lead_scores)
   const [
     { data: consultations },
-    { data: recommendations },
     { data: financeRequests },
     { data: pipelines },
     { data: profiles },
   ] = await Promise.all([
-    consultationIds.length
+    profileIds.length
       ? admin
           .from("consultations")
-          .select("id, session_id, main_reason_for_ev, budget_max_gbp, daily_miles, home_charging, created_at")
-          .in("id", consultationIds)
-      : Promise.resolve({ data: [] }),
-
-    consultationIds.length
-      ? admin
-          .from("ai_recommendations")
-          .select("id, consultation_id, confidence_score, recommendation_payload")
-          .in("consultation_id", consultationIds)
+          .select("id, profile_id, main_reason_for_ev, budget_max_gbp, daily_miles, home_charging, created_at")
+          .in("profile_id", profileIds)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
 
     sessionIds.length
       ? admin
           .from("finance_requests")
-          .select("id, session_id, consultation_id, deposit_gbp, estimated_income_band, target_monthly_budget_gbp, status, created_at")
+          .select("id, session_id, deposit_gbp, estimated_income_band, status, created_at")
           .in("session_id", sessionIds)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
@@ -186,44 +179,41 @@ export async function getPipelineLeads(): Promise<PipelineLeadRow[]> {
       .order("updated_at", { ascending: false }),
 
     profileIds.length
-      ? admin
-          .from("profiles")
-          .select("id, email, full_name")
-          .in("id", profileIds)
+      ? admin.from("profiles").select("id, email, full_name").in("id", profileIds)
       : Promise.resolve({ data: [] }),
   ]);
 
-  // Index by key for O(1) lookups
-  const consultationMap = new Map(
-    (consultations ?? []).map((c: Record<string, unknown>) => [c.id as string, c]),
-  );
-
-  // Latest recommendation per consultation
-  const recMap = new Map<string, Record<string, unknown>>();
-  for (const r of (recommendations ?? []) as Record<string, unknown>[]) {
-    const cid = r.consultation_id as string;
-    if (!recMap.has(cid)) recMap.set(cid, r);
+  // Latest consultation per profile_id
+  const consultByProfile = new Map<string, Record<string, unknown>>();
+  for (const c of (consultations ?? []) as Record<string, unknown>[]) {
+    const pid = c.profile_id as string | null;
+    if (pid && !consultByProfile.has(pid)) consultByProfile.set(pid, c);
   }
 
-  // Latest finance request per session
+  // Fetch recommendations for found consultations (second-level lookup)
+  const consultationIds = [...consultByProfile.values()].map((c) => c.id as string);
+  const recByConsultation = new Map<string, Record<string, unknown>>();
+  if (consultationIds.length) {
+    const { data: recs } = await admin
+      .from("ai_recommendations")
+      .select("id, consultation_id, confidence_score, recommendation_payload")
+      .in("consultation_id", consultationIds)
+      .order("created_at", { ascending: false });
+    for (const r of (recs ?? []) as Record<string, unknown>[]) {
+      const cid = r.consultation_id as string;
+      if (!recByConsultation.has(cid)) recByConsultation.set(cid, r);
+    }
+  }
+
   const financeBySession = new Map<string, Record<string, unknown>>();
   for (const f of (financeRequests ?? []) as Record<string, unknown>[]) {
     const sid = f.session_id as string;
     if (!financeBySession.has(sid)) financeBySession.set(sid, f);
   }
-  const financeByCons = new Map<string, Record<string, unknown>>();
-  for (const f of (financeRequests ?? []) as Record<string, unknown>[]) {
-    const cid = f.consultation_id as string | null;
-    if (cid && !financeByCons.has(cid)) financeByCons.set(cid, f);
-  }
 
-  // Pipeline per consultation or finance_request
-  const pipelineByCons    = new Map<string, Record<string, unknown>>();
   const pipelineByProfile = new Map<string, Record<string, unknown>>();
   for (const p of (pipelines ?? []) as Record<string, unknown>[]) {
-    const cid = p.consultation_id as string | null;
     const pid = p.profile_id as string | null;
-    if (cid) pipelineByCons.set(cid, p);
     if (pid) pipelineByProfile.set(pid, p);
   }
 
@@ -231,76 +221,74 @@ export async function getPipelineLeads(): Promise<PipelineLeadRow[]> {
     (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
   );
 
-  return (scores as Record<string, unknown>[]).map((s): PipelineLeadRow => {
-    const sessionId     = s.session_id as string;
-    const profileId     = s.profile_id as string | null;
-    const consultId     = s.consultation_id as string | null;
-    const score         = s.score as number;
-    const category      = (s.category as LeadScoreCategory) ?? scoreToCategory(score);
+  return loggedInScores.map((s): PipelineLeadRow => {
+    const sessionId = s.session_id as string;
+    const profileId = s.user_id as string | null;   // user_id = profiles.id
+    const score     = s.score as number;
+    const category  = scoreToCategory(score);
 
-    const consultation  = consultId ? consultationMap.get(consultId) : null;
-    const rec           = consultId ? recMap.get(consultId) : null;
-    const finance       = financeBySession.get(sessionId) ?? (consultId ? financeByCons.get(consultId) : null);
-    const pipeline      = (consultId ? pipelineByCons.get(consultId) : null) ??
-                          (profileId ? pipelineByProfile.get(profileId) : null);
-    const profile       = profileId ? profileMap.get(profileId) : null;
+    const consultation = profileId ? consultByProfile.get(profileId) : null;
+    const consultId    = consultation ? (consultation.id as string) : null;
+    const rec          = consultId ? recByConsultation.get(consultId) : null;
+    const finance      = financeBySession.get(sessionId) ?? null;
+    const pipeline     = profileId ? pipelineByProfile.get(profileId) : null;
+    const profile      = profileId ? profileMap.get(profileId) : null;
 
-    // Extract top vehicle label from recommendation payload
     let topVehicle: string | null = null;
     let recScore: number | null   = null;
     if (rec) {
       const payload = rec.recommendation_payload as Record<string, unknown> | null;
       const results = payload?.results as Array<Record<string, unknown>> | null;
       if (results?.length) {
-        const top = results[0];
-        topVehicle = (top.vehicle_label as string) ?? null;
-        recScore   = (top.match_score as number) ?? null;
+        topVehicle = (results[0]!.vehicle_label as string) ?? null;
+        recScore   = (results[0]!.match_score   as number) ?? null;
       }
     }
 
+    const activityAt =
+      (s.last_activity_at as string | null) ??
+      (s.updated_at as string | null) ??
+      new Date().toISOString();
+
     return {
-      id:            s.id as string,
-      session_id:    sessionId,
-      profile_id:    profileId,
-      display_id:    profileId
+      id:         s.id as string,
+      session_id: sessionId,
+      profile_id: profileId,
+      display_id: profileId
         ? `user:${profileId.slice(0, 8)}`
-        : sessionId.slice(0, 14),
-      email:         profile ? (profile.email as string | null) : null,
-      full_name:     profile ? (profile.full_name as string | null) : null,
+        : (sessionId?.slice(0, 14) ?? (s.id as string).slice(0, 14)),
+      email:      profile ? (profile.email     as string | null) : null,
+      full_name:  profile ? (profile.full_name as string | null) : null,
 
       score,
       category,
-      category_label: CATEGORY_LABELS[category],
-      scoring_reasons: (s.scoring_reasons as ScoringReason[]) ?? [],
-      last_calculated_at: s.last_calculated_at as string,
+      category_label:    CATEGORY_LABELS[category],
+      scoring_reasons:   [],
+      last_calculated_at: activityAt,
 
-      consultation_id:          consultId,
-      consultation_created_at:  consultation ? (consultation.created_at as string) : null,
-      consultation_reason:      consultation ? (consultation.main_reason_for_ev as string | null) : null,
-      consultation_budget_max:  consultation ? (consultation.budget_max_gbp as number | null) : null,
-      consultation_daily_miles: consultation ? (consultation.daily_miles as number | null) : null,
-      consultation_home_charging: consultation ? (consultation.home_charging as boolean | null) : null,
+      consultation_id:           consultId,
+      consultation_created_at:   consultation ? (consultation.created_at       as string)         : null,
+      consultation_reason:       consultation ? (consultation.main_reason_for_ev as string | null) : null,
+      consultation_budget_max:   consultation ? (consultation.budget_max_gbp    as number | null)  : null,
+      consultation_daily_miles:  consultation ? (consultation.daily_miles        as number | null)  : null,
+      consultation_home_charging: consultation ? (consultation.home_charging     as boolean | null) : null,
 
       top_recommended_vehicle: topVehicle,
       recommendation_score:    recScore,
       recommendation_id:       rec ? (rec.id as string) : null,
 
-      finance_request_id:  finance ? (finance.id as string) : null,
-      finance_status:      finance ? (finance.status as FinanceRequestStatus) : null,
-      finance_deposit:     finance ? (finance.deposit_gbp as number | null) : null,
+      finance_request_id:  finance ? (finance.id         as string)              : null,
+      finance_status:      finance ? (finance.status      as FinanceRequestStatus) : null,
+      finance_deposit:     finance ? (finance.deposit_gbp as number | null)       : null,
       finance_income_band: finance ? (finance.estimated_income_band as string | null) : null,
 
-      pipeline_id:    pipeline ? (pipeline.id as string) : null,
-      pipeline_stage: pipeline
-        ? (pipeline.stage as LeadPipelineStage)
-        : suggestPipelineStage(score),
-      priority:       pipeline
-        ? (pipeline.priority as LeadPipelinePriority)
-        : suggestPriority(score),
-      assigned_to:    pipeline ? (pipeline.assigned_to as string | null) : null,
-      pipeline_notes: pipeline ? (pipeline.notes as string | null) : null,
+      pipeline_id:    pipeline ? (pipeline.id       as string)              : null,
+      pipeline_stage: pipeline ? (pipeline.stage    as LeadPipelineStage)   : suggestPipelineStage(score),
+      priority:       pipeline ? (pipeline.priority as LeadPipelinePriority) : suggestPriority(score),
+      assigned_to:    pipeline ? (pipeline.assigned_to as string | null)    : null,
+      pipeline_notes: pipeline ? (pipeline.notes       as string | null)    : null,
 
-      created_at: s.created_at as string,
+      created_at: activityAt,
     };
   });
 }

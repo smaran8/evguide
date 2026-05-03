@@ -135,24 +135,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, id: data.id }, { status: 201 });
     }
 
-    // All other interest types go to the leads table
+    // The legacy leads table is not present in the live schema. Store these
+    // lead intents in consultation_requests so admins can still action them.
+    const sector = parsed.data.interest_type === "finance" ? "bank" : "vehicle";
     const { data, error } = await admin
-      .from("leads")
+      .from("consultation_requests")
       .insert({
-        name: parsed.data.name,
+        user_id: user?.id ?? null,
+        full_name: parsed.data.name,
         email: parsed.data.email,
         phone: parsed.data.phone,
-        vehicle_id: parsed.data.vehicle_id,
-        interest_type: parsed.data.interest_type,
-        budget: parsed.data.budget,
-        message: parsed.data.message,
-        status: "new",
+        sector,
+        bank_name: sector === "bank" ? "Finance quote request" : null,
+        ev_model_id: parsed.data.vehicle_id ?? null,
+        ev_model_label: parsed.data.vehicle_label,
+        notes: parsed.data.message,
+        status: "pending",
       })
       .select("id")
       .single();
 
     if (error) {
-      console.error("[leads] failed to insert lead:", error.code, error.message, error.details);
+      console.error("[leads] consultation_requests insert failed:", error.code, error.message, error.details);
       return NextResponse.json(
         {
           error: buildPersistenceError(

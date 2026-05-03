@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getSeoPageById } from "@/lib/seo";
 import { updateSeoPage } from "../actions";
-import { SeoFormFields } from "../new/page";
+import { SeoFormFields } from "@/components/seo/SeoFormFields";
 
 type Props = { params: Promise<{ id: string }> };
 

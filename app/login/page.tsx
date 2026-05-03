@@ -17,9 +17,13 @@ function LoginForm() {
 
   const handleOAuth = async (provider: "google" | "apple") => {
     setOauthLoading(provider);
+    const nextPath = searchParams.get("next");
+    const redirectTo = nextPath?.startsWith("/")
+      ? `${window.location.origin}${nextPath}`
+      : `${window.location.origin}/`;
     await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo },
     });
     setOauthLoading(null);
   };

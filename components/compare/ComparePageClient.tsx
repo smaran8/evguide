@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PremiumCompareHero from "@/components/compare/PremiumCompareHero";
 import PremiumCompareSummary from "@/components/compare/PremiumCompareSummary";
-import PremiumCompareTable from "@/components/compare/PremiumCompareTable";
 import PremiumCompareInsights from "@/components/compare/PremiumCompareInsights";
 import PremiumCompareCTA from "@/components/compare/PremiumCompareCTA";
+import PremiumCompareTable from "@/components/compare/PremiumCompareTable";
 import { evModels } from "@/data/evModels";
 import { mapDbEV, type DbEV } from "@/lib/ev-models";
 import { trackEvent } from "@/lib/tracking/client";
@@ -27,12 +27,14 @@ function overallScore(v: EVModel): number {
 export default function ComparePageClient() {
   const searchParams = useSearchParams();
   const [models, setModels] = useState<EVModel[]>(evModels);
+  const autoOpenQuote = searchParams.get("openQuote") === "true";
   const [selectedA, setSelectedA] = useState<string>(() => {
-    const carA = searchParams.get("carA");
+    const carA = searchParams.get("carA") ?? searchParams.get("vehicles")?.split(",")[0] ?? "";
     return carA && evModels.some((m) => m.id === carA) ? carA : "";
   });
   const [selectedB, setSelectedB] = useState<string>(() => {
-    const carB = searchParams.get("carB");
+    const vehicles = searchParams.get("vehicles")?.split(",") ?? [];
+    const carB = searchParams.get("carB") ?? vehicles[1] ?? "";
     return carB && evModels.some((m) => m.id === carB) ? carB : "";
   });
   const comparisonRef = useRef<HTMLDivElement>(null);
@@ -54,7 +56,13 @@ export default function ComparePageClient() {
         const mapped = payload.data
           .filter((item: Partial<DbEV>) => item?.id && item?.brand && item?.model)
           .map((item: DbEV) => mapDbEV(item));
-        if (mapped.length > 0) setModels(mapped);
+        if (mapped.length > 0) {
+          const merged = [
+            ...mapped,
+            ...evModels.filter((s) => !mapped.some((db: EVModel) => db.id === s.id)),
+          ];
+          setModels(merged);
+        }
       } catch {
         // fallback to static
       }
@@ -78,12 +86,9 @@ export default function ComparePageClient() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Derive winner for CTA (safe — only used when showComparison is true)
   const winner: EVModel | null =
     modelA && modelB
-      ? overallScore(modelA) >= overallScore(modelB)
-        ? modelA
-        : modelB
+      ? overallScore(modelA) >= overallScore(modelB) ? modelA : modelB
       : null;
 
   return (
@@ -105,18 +110,19 @@ export default function ComparePageClient() {
           {/* 0. Hero summary cards */}
           <PremiumCompareSummary modelA={modelA} modelB={modelB} />
 
-          {/* 1. Detailed comparison table — FIRST */}
+          {/* 1. Detailed comparison table */}
           <PremiumCompareTable modelA={modelA} modelB={modelB} />
 
-          {/* 2. Winner summary — SECOND */}
+          {/* 2. Winner summary */}
           <PremiumCompareInsights modelA={modelA} modelB={modelB} />
 
-          {/* 3. Get Quotation CTA — THIRD */}
+          {/* 3. Get Quotation CTA */}
           <PremiumCompareCTA
             modelA={modelA}
             modelB={modelB}
             winner={winner}
             onReset={handleReset}
+            autoOpenQuote={autoOpenQuote}
           />
         </div>
       )}

@@ -64,17 +64,17 @@ export default function HomePage() {
         }
       />
       <TrustStrip />
-      <HowItWorks />
       <Suspense fallback={<DeferredSectionSkeleton />}>
         <HomeFeaturedEVsSection />
       </Suspense>
-      <AIRecommendation />
       <FinancePreview />
+      <FinalCTA />
+      <HowItWorks />
+      <AIRecommendation />
       <Testimonials />
       <Suspense fallback={<DeferredSectionSkeleton />}>
         <HomeBlogPreviewSection />
       </Suspense>
-      <FinalCTA />
       <PremiumFooter />
     </main>
   );

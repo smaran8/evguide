@@ -66,6 +66,65 @@ export const COMPARE_METRICS: CompareMetric[] = [
     format: (n) => `${n} kW`,
   },
   {
+    key: "chargeTimeTo80",
+    label: "10–80% charge time",
+    unit: "min",
+    getValue: (v) => {
+      const enriched = applyEvEnrichment(v);
+      return enriched.chargeTimeTo80Mins ?? null;
+    },
+    lowerIsBetter: true,
+    format: (n) => `${n} min`,
+  },
+  {
+    key: "bootLitres",
+    label: "Boot Space",
+    unit: "L",
+    getValue: (v) => (v.bootLitres != null ? v.bootLitres : null),
+    lowerIsBetter: false,
+    format: (n) => `${n} L`,
+  },
+  {
+    key: "warrantyYears",
+    label: "Warranty",
+    unit: "yrs",
+    getValue: (v) => {
+      if (!v.warranty) return null;
+      const parsed = Number.parseFloat(String(v.warranty).replace(/[^0-9.]/g, ""));
+      return Number.isFinite(parsed) ? Math.round(parsed) : null;
+    },
+    lowerIsBetter: false,
+    format: (n) => `${n} yrs`,
+  },
+  {
+    key: "batteryWarrantyYears",
+    label: "Battery warranty",
+    unit: "yrs",
+    getValue: (v) => (v.batteryWarrantyYears ?? null),
+    lowerIsBetter: false,
+    format: (n) => `${n} yrs`,
+  },
+  {
+    key: "bikTax",
+    label: "BIK tax estimate",
+    unit: "£/mo",
+    getValue: (v) => (v.price ? Math.round((v.price * 0.015) / 12) : null),
+    lowerIsBetter: true,
+    format: (n) => `£${n}/mo`,
+  },
+  {
+    key: "greatDealScore",
+    label: "Great Deal Score",
+    unit: "",
+    getValue: (v) => {
+      const base = v.rangeKm / Math.max(v.price, 1) * 1000;
+      const bonus = (v.batteryKWh ?? 0) / 2;
+      return Math.round(base + bonus);
+    },
+    lowerIsBetter: false,
+    format: (n) => `${n}`,
+  },
+  {
     key: "annualEnergyCostGbp",
     label: "Annual Energy Cost",
     unit: "£/yr",

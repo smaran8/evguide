@@ -15,6 +15,7 @@ export interface MatchAnswers {
   bodyType: BodyPreference;
   priority: PurchasePriority;
   condition: ConditionPreference;
+  postcode: string;
 }
 
 export interface MatchQuestionOption<T extends string> {
@@ -28,7 +29,9 @@ export interface MatchQuestion<T extends string> {
   key: keyof MatchAnswers;
   title: string;
   description: string;
-  options: MatchQuestionOption<T>[];
+  options?: MatchQuestionOption<T>[];
+  type?: "choice" | "text";
+  placeholder?: string;
 }
 
 export interface MatchResult {
@@ -46,6 +49,7 @@ export const defaultAnswers: MatchAnswers = {
   bodyType: "any",
   priority: "value",
   condition: "either",
+  postcode: "",
 };
 
 export const matchQuestions: MatchQuestion<string>[] = [
@@ -113,6 +117,13 @@ export const matchQuestions: MatchQuestion<string>[] = [
       { value: "used", title: "Used is fine", description: "Better affordability if the right model stands out." },
       { value: "either", title: "Show both mindsets", description: "Optimise for the smartest total decision." },
     ],
+  },
+  {
+    key: "postcode",
+    title: "What is your postcode?",
+    description: "Optional — helps estimate charging costs and local incentives more accurately.",
+    type: "text",
+    placeholder: "e.g. SW1A 1AA",
   },
 ];
 
@@ -300,6 +311,6 @@ export function getTopMatches(answers: MatchAnswers): MatchResult[] {
       };
     })
     .sort((a, b) => b.matchScore - a.matchScore)
-    .slice(0, 3);
+    .slice(0, 5);
 }
 
