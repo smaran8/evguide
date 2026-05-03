@@ -102,12 +102,6 @@ export default function PremiumNavbar() {
               Exchange
             </Link>
             <Link
-              href="/ai-match"
-              className="text-sm font-medium text-[#374151] transition-colors hover:text-[#1FBF9F]"
-            >
-              AI Match
-            </Link>
-            <Link
               href="/blog"
               className="text-sm font-medium text-[#374151] transition-colors hover:text-[#1FBF9F]"
             >
