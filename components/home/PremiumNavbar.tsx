@@ -66,7 +66,7 @@ export default function PremiumNavbar() {
               href="/"
               className="text-xl font-bold tracking-tight text-[#1A1A1A] transition-colors hover:text-[#1FBF9F]"
             >
-              EVGuide<span className="text-[#1FBF9F]"> AI</span>
+              EVGuide
             </Link>
           </div>
 
