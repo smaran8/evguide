@@ -24,14 +24,61 @@ function TrendBar({ score }: { score: number }) {
   );
 }
 
+const SETUP_SQL = `-- Run this in Supabase SQL Editor → New query
+CREATE TABLE IF NOT EXISTS public.seo_keywords (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  keyword       TEXT        NOT NULL,
+  search_volume INTEGER     NOT NULL DEFAULT 0,
+  trend_score   NUMERIC(5,2) NOT NULL DEFAULT 0.0,
+  intent        TEXT        NOT NULL DEFAULT 'informational'
+                CHECK (intent IN ('informational','commercial','transactional','navigational')),
+  target_page   TEXT        NOT NULL DEFAULT '/',
+  is_active     BOOLEAN     NOT NULL DEFAULT TRUE,
+  is_overridden BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.seo_keywords ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin full access on seo_keywords" ON public.seo_keywords
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid()
+        AND role IN ('admin', 'super_admin')
+    )
+  );`;
+
 export default async function AdminSeoKeywordsPage() {
-  const keywords = await getAllKeywords();
+  const { keywords, tableExists } = await getAllKeywords();
 
   const highTrend = keywords.filter((k) => k.trend_score >= 80).length;
   const overridden = keywords.filter((k) => k.is_overridden).length;
 
   return (
     <div className="mx-auto max-w-6xl">
+      {!tableExists && (
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+          <h2 className="text-base font-semibold text-amber-900">Database setup required</h2>
+          <p className="mt-1 text-sm text-amber-700">
+            The <code className="font-mono">seo_keywords</code> table does not exist yet. Run the
+            SQL below in your{" "}
+            <a
+              href="https://supabase.com/dashboard/project/_/sql/new"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Supabase SQL Editor
+            </a>{" "}
+            then reload this page.
+          </p>
+          <pre className="mt-4 overflow-x-auto rounded-xl bg-white p-4 text-xs text-slate-700 shadow-sm ring-1 ring-amber-200">
+            {SETUP_SQL}
+          </pre>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>

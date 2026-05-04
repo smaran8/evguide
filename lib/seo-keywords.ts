@@ -41,7 +41,7 @@ export async function getTrendingKeywords(): Promise<SeoKeyword[]> {
     .eq("is_active", true)
     .order("trend_score", { ascending: false });
 
-  if (error) throw new Error(error.message);
+  if (error) return [];
 
   // Simulate live trend drift for non-overridden keywords
   return (data ?? []).map((kw: SeoKeyword) => {
@@ -151,7 +151,7 @@ export async function syncKeywordsToPages(
     .gte("trend_score", trendThreshold)
     .order("trend_score", { ascending: false });
 
-  if (kwError) throw new Error(kwError.message);
+  if (kwError) return { pagesUpdated: 0, keywordsApplied: 0, slugsUpdated: [] };
   const keywords: SeoKeyword[] = kwData ?? [];
 
   // Group by target_page
@@ -231,14 +231,25 @@ export async function syncKeywordsToPages(
 
 // ─── CRUD (admin) ─────────────────────────────────────────────────────────────
 
-export async function getAllKeywords(): Promise<SeoKeyword[]> {
+export async function getAllKeywords(): Promise<{ keywords: SeoKeyword[]; tableExists: boolean }> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("seo_keywords")
     .select("*")
     .order("trend_score", { ascending: false });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+
+  if (error) {
+    // Table doesn't exist yet — return empty state rather than crashing
+    const missing =
+      error.message.includes("does not exist") ||
+      error.message.includes("relation") ||
+      error.code === "42P01" ||
+      error.message.includes("schema cache");
+    if (missing) return { keywords: [], tableExists: false };
+    throw new Error(error.message);
+  }
+
+  return { keywords: data ?? [], tableExists: true };
 }
 
 export async function getKeywordById(id: string): Promise<SeoKeyword | null> {
